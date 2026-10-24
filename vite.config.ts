@@ -1,7 +1,8 @@
 import { spawn } from "node:child_process";
 import path from "node:path";
-import { defineConfig, type Plugin } from "vite";
+import { defineConfig, loadEnv, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
+import { createAiServerHandler, serverKeys } from "./server/ai-relay";
 
 /**
  * Dev-only endpoint: POST /api/bench runs `node bench/run.mjs` on this machine and streams its output.
@@ -91,6 +92,25 @@ function aiProxy(): Plugin {
 }
 
 /**
+ * Dev-only: AI keys kept in a `.env` file on this computer. The relay attaches them to provider requests here, so they never
+ * reach the browser. They are read with loadEnv and are deliberately NOT put in `define` or a VITE_ variable, which would
+ * bake them into the public bundle.
+ */
+function aiServerKeys(): Plugin {
+  return {
+    name: "system-learn-ai-server-keys",
+    configureServer(server) {
+      const env = loadEnv(server.config.mode, server.config.envDir || server.config.root, "");
+      server.middlewares.use("/api/ai-server", createAiServerHandler(env));
+      server.httpServer?.once("listening", () => {
+        const found = Object.entries(serverKeys(env)).filter(([, ok]) => ok).map(([k]) => k);
+        console.log(found.length ? `  AI keys from .env: ${found.join(", ")} (kept on this computer, never sent to the browser)` : "  No AI keys in .env (optional: copy .env.example to .env)");
+      });
+    },
+  };
+}
+
+/**
  * Production-only Content-Security-Policy. The saved AI key is encrypted, but script running inside the page could still
  * ask the browser to use it, so the page may only run this app's own scripts and only talk to the AI providers.
  * (Dev mode is exempt: Vite's hot reload needs inline scripts.)
@@ -117,8 +137,8 @@ function contentSecurityPolicy(): Plugin {
 // `base: "./"` keeps the build portable (GitHub Pages, any static host, or a local folder).
 export default defineConfig({
   base: "./",
-  plugins: [react(), benchApi(), aiProxy(), contentSecurityPolicy()],
+  plugins: [react(), benchApi(), aiProxy(), aiServerKeys(), contentSecurityPolicy()],
   server: { port: 5173 },
   build: { chunkSizeWarningLimit: 2000 },
-  test: { environment: "node", include: ["src/**/*.test.ts"] },
+  test: { environment: "node", include: ["src/**/*.test.ts", "server/**/*.test.ts"] },
 } as never);

@@ -1,7 +1,7 @@
-import { CircleCheck, CircleX, KeyRound, Lock, LockOpen, ShieldCheck, Sparkles, TriangleAlert } from "lucide-react";
+import { CircleCheck, CircleX, FileKey2, KeyRound, Lock, LockOpen, ShieldCheck, Sparkles, TriangleAlert } from "lucide-react";
 import { useEffect, useState } from "react";
 import { testConnection } from "../ai/client";
-import { DEFAULT_MODELS, isConfigured, providerLabel, useAi, type AiSettings, type Provider } from "../ai/settings";
+import { DEFAULT_MODELS, isConfigured, isLocalHost, providerLabel, useAi, type AiSettings, type Provider } from "../ai/settings";
 import type { Protection } from "../ai/vault";
 
 const PROVIDERS: { id: Provider; title: string; blurb: string }[] = [
@@ -17,6 +17,7 @@ const MIN_PASSPHRASE = 8;
 function useRelayAvailable(): boolean {
   const [ok, setOk] = useState(false);
   useEffect(() => {
+    if (!isLocalHost()) return;
     fetch("./api/ai-proxy")
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((j) => setOk(!!j.available))
@@ -62,8 +63,9 @@ export function AiSettingsPage() {
   const savedProtection = useAi((s) => s.protection);
   const loadError = useAi((s) => s.loadError);
   const canPersist = useAi((s) => s.canPersist);
+  const serverKeys = useAi((s) => s.serverKeys);
   const enabled = useAi((s) => s.enabled);
-  const { save, clear, setEnabled, lock } = useAi.getState();
+  const { save, clear, setEnabled, lock, useServerKey } = useAi.getState();
   const [form, setForm] = useState<AiSettings>(saved);
   const [protection, setProtection] = useState<Protection>(savedProtection);
   const [pass, setPass] = useState("");
@@ -72,16 +74,17 @@ export function AiSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [test, setTest] = useState<{ state: "idle" | "running" | "ok" | "fail"; msg?: string }>({ state: "idle" });
 
-  // The saved key is read asynchronously at startup: fill the form once it arrives.
+  // Settings arrive asynchronously at startup (saved key, then any .env key) and change on save/clear: keep the form in step.
   useEffect(() => {
     if (status === "ready") {
       setForm(saved);
       setProtection(savedProtection);
     }
-  }, [status]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [status, saved]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const set = (patch: Partial<AiSettings>) => {
-    setForm((f) => ({ ...f, ...patch }));
+    // typing a key (or switching provider) by hand means "use this key", not the one from .env
+    setForm((f) => ({ ...f, ...patch, ...("apiKey" in patch || "provider" in patch ? { viaServer: false } : {}) }));
     setTest({ state: "idle" });
     setMsg(null);
   };
@@ -103,7 +106,7 @@ export function AiSettingsPage() {
 
   const onSave = async () => {
     setSaving(true);
-    const r = await save(form, { protection, passphrase: needsNewPass ? pass : undefined });
+    const r = await save({ ...form, viaServer: form.viaServer && !form.apiKey.trim() }, { protection, passphrase: needsNewPass ? pass : undefined });
     setSaving(false);
     if (!r.ok) return setMsg({ ok: false, text: r.error });
     setEnabled(true);
@@ -137,7 +140,9 @@ export function AiSettingsPage() {
           <b>{status === "loading" ? "Loading your saved key…" : active ? `Using ${providerLabel(saved.provider)}` : status === "locked" ? "Locked" : "Using built-in explanations"}</b>
           <span className="muted small">
             {active
-              ? `${saved.model || "default model"} · ${savedProtection === "passphrase" ? "encrypted with your passphrase" : "encrypted on this device"}${saved.remember ? "" : " · this tab only"}`
+              ? saved.viaServer
+                ? `${saved.model || "default model"} · key from your .env file, kept on this computer and never sent to the browser`
+                : `${saved.model || "default model"} · ${savedProtection === "passphrase" ? "encrypted with your passphrase" : "encrypted on this device"}${saved.remember ? "" : " · this tab only"}`
               : status === "locked"
                 ? "Enter your passphrase above to use AI."
                 : "Free, instant, and works offline."}
@@ -153,7 +158,31 @@ export function AiSettingsPage() {
         )}
       </div>
 
-      <h2 className="section-title">Provider</h2>
+      {serverKeys && (serverKeys.openai || serverKeys.anthropic || serverKeys.azure) && status !== "locked" && (
+        <div className="card env-card">
+          <div className="row gap nowrap">
+            <span className="status-icon"><FileKey2 size={18} /></span>
+            <div className="grow">
+              <b>Keys found in your .env file</b>
+              <span className="muted small" style={{ display: "block" }}>
+                They stay on this computer's server, which adds them to requests. The browser never sees them and nothing is stored in it.
+              </span>
+            </div>
+          </div>
+          <div className="row gap">
+            {(["openai", "anthropic", "azure"] as const).filter((p) => serverKeys[p]).map((p) => {
+              const on = !!saved.viaServer && saved.provider === p && active;
+              return (
+                <button key={p} className={`btn ${on ? "primary" : ""}`} onClick={() => void useServerKey(p)}>
+                  {on ? <CircleCheck size={15} /> : <FileKey2 size={15} />} {on ? "Using" : "Use"} {providerLabel(p)}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      <h2 className="section-title">{serverKeys ? "Or use a key from your browser" : "Provider"}</h2>
       <div className="provider-grid">
         {PROVIDERS.filter((p) => p.id !== "azure" || relay || saved.provider === "azure").map((p) => (
           <button key={p.id} className={`provider${form.provider === p.id ? " on" : ""}`} onClick={() => choose(p.id)}>
@@ -180,6 +209,9 @@ export function AiSettingsPage() {
                 <input value={form.azureApiVersion} onChange={(e) => set({ azureApiVersion: e.target.value })} />
               </label>
             </>
+          )}
+          {form.viaServer && (
+            <p className="hint good"><FileKey2 size={14} /> <span>Using the key from your <code>.env</code> file. Type a key below only if you want to use a different one in the browser instead.</span></p>
           )}
           <label className="field">
             API key
@@ -258,7 +290,7 @@ export function AiSettingsPage() {
         <div className="more-body">
           <ul className="small privacy-list">
             <li>Your key, and for Azure the endpoint and deployment, are saved <b>encrypted (AES-256-GCM)</b> in this browser. Nothing readable is stored, and the saved data is tamper-evident.</li>
-            <li>Nothing is stored on any server. It's sent only to the provider you choose{relay ? ", and to Azure through this app's own local server on your computer" : ""}, and never put in share links, exports or the repository.</li>
+            <li>Running locally, you can keep the key in a <code>.env</code> file instead: it never reaches the browser at all. Otherwise nothing is stored on any server. It's sent only to the provider you choose{relay ? ", and to Azure through this app's own local server on your computer" : ""}, and never put in share links, exports or the repository.</li>
             <li>What encryption protects against: someone copying your browser's storage or profile files, or another website reading it. Only this site can use the saved key.</li>
             <li>What it can't protect against: a browser extension or malicious code that runs <i>inside this page</i> while the key is unlocked can ask the browser to use it. That's why this site loads no third-party scripts and restricts what the page may run or connect to. Use a passphrase on shared computers, and give the key a low spending limit.</li>
             <li>Each explanation is one API call billed to your account. Nothing is sent until you click "Explain with AI" or send a chat message.</li>

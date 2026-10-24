@@ -15,6 +15,7 @@ export function MachinePage() {
   const logRef = useRef<HTMLPreElement>(null);
 
   useEffect(() => {
+    if (!/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) return void setApiOk(false); // no dev server on a static host
     fetch("./api/bench")
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((j) => setApiOk(!!j.available))

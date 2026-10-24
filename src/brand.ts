@@ -2,6 +2,7 @@
 export const BRAND = {
   name: "Kushal Rana",
   links: [
+    { id: "portfolio", label: "Portfolio", href: "https://kushalranaai.github.io/" },
     { id: "linkedin", label: "LinkedIn", href: "https://www.linkedin.com/in/kushal-rana" },
     { id: "x", label: "X", href: "https://x.com/KushalranaAI" },
     { id: "medium", label: "Medium", href: "https://kushalrana448.medium.com/" },

@@ -13,7 +13,11 @@ export interface AiSettings {
   azureApiVersion: string;
   /** keep the key after the browser closes (localStorage) instead of only this tab (sessionStorage) */
   remember: boolean;
+  /** the key lives in the local server's .env file; requests go through the relay and the browser holds no key */
+  viaServer?: boolean;
 }
+
+export type ServerKeys = Record<"openai" | "anthropic" | "azure", boolean>;
 
 export const DEFAULT_MODELS: Record<Exclude<Provider, "none" | "azure">, string> = {
   anthropic: "claude-opus-5-5",
@@ -32,7 +36,43 @@ const EMPTY: AiSettings = {
 };
 
 const KEY = "system-learn:ai";
+/** set when the learner explicitly turns the .env key off, so it isn't switched back on at the next start */
+const ENV_OFF = "system-learn:ai:env-off";
 const vault = new Vault();
+
+const flag = (k: string) => {
+  try {
+    return localStorage.getItem(k) === "1";
+  } catch {
+    return false;
+  }
+};
+const setFlag = (k: string, on: boolean) => {
+  try {
+    if (on) localStorage.setItem(k, "1");
+    else localStorage.removeItem(k);
+  } catch {
+    /* storage unavailable */
+  }
+};
+
+/** The local dev server (and its relay) only exists on localhost. Probing a static host would just log a 404 on every page. */
+export const isLocalHost = () => typeof location !== "undefined" && /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+
+/** Ask the local dev server which providers have a key in .env. Null on a static host or when there is no relay. */
+async function fetchServerKeys(): Promise<ServerKeys | null> {
+  if (!isLocalHost()) return null;
+  try {
+    const r = await fetch("./api/ai-server");
+    if (!r.ok || !(r.headers.get("content-type") ?? "").includes("json")) return null;
+    const j = await r.json();
+    return ["openai", "anthropic", "azure"].every((k) => typeof j?.[k] === "boolean") ? (j as ServerKeys) : null;
+  } catch {
+    return null;
+  }
+}
+
+const serverSettings = (provider: keyof ServerKeys): AiSettings => ({ ...EMPTY, provider, viaServer: true });
 
 /** loading: reading storage · ready: settings available · locked: encrypted with a passphrase that isn't entered yet */
 export type AiStatus = "loading" | "ready" | "locked";
@@ -69,7 +109,9 @@ function writeStored(env: Envelope, remember: boolean) {
 }
 
 export function isConfigured(s: AiSettings): boolean {
-  if (s.provider === "none" || !s.apiKey.trim()) return false;
+  if (s.provider === "none") return false;
+  if (s.viaServer) return true;
+  if (!s.apiKey.trim()) return false;
   if (s.provider === "azure") return !!s.azureEndpoint.trim() && !!s.azureDeployment.trim();
   return true;
 }
@@ -95,7 +137,12 @@ interface AiState {
   loadError: string | null;
   /** false when the browser can't encrypt, so nothing was written to storage */
   canPersist: boolean;
+  /** providers that have a key in the local server's .env (null when there is no local server) */
+  serverKeys: ServerKeys | null;
   init: () => Promise<void>;
+  /** use the key from .env for this provider; the browser stores no key */
+  useServerKey: (provider: keyof ServerKeys) => Promise<void>;
+  loadStored: () => Promise<void>;
   save: (s: AiSettings, opts: SaveOptions) => Promise<SaveResult>;
   unlock: (passphrase: string) => Promise<string | null>;
   lock: () => void;
@@ -113,10 +160,28 @@ export const useAi = create<AiState>((set, get) => ({
   protection: "device",
   loadError: null,
   canPersist: cryptoAvailable(),
+  serverKeys: null,
 
   init: async () => {
     if (initStarted) return;
     initStarted = true;
+    await get().loadStored();
+    const keys = await fetchServerKeys();
+    set({ serverKeys: keys });
+    // Nothing saved in the browser: if .env has a key, use it automatically (unless the learner turned that off).
+    if (keys && get().status === "ready" && !isConfigured(get().settings) && !flag(ENV_OFF)) {
+      const first = (["openai", "anthropic", "azure"] as const).find((p) => keys[p]);
+      if (first) set({ settings: serverSettings(first) });
+    }
+  },
+
+  useServerKey: async (provider) => {
+    setFlag(ENV_OFF, false);
+    await get().save(serverSettings(provider), { protection: "device" });
+    set({ enabled: true });
+  },
+
+  loadStored: async () => {
     const found = stored();
     if (!found) return set({ status: "ready" });
     let parsed: unknown;
@@ -204,6 +269,8 @@ export const useAi = create<AiState>((set, get) => ({
   },
 
   clear: async () => {
+    // Clearing while the .env key is in use means "stop using it": remember that across restarts.
+    if (get().settings.viaServer) setFlag(ENV_OFF, true);
     removeStored();
     pending = null;
     await vault.destroy();

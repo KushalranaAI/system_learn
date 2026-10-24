@@ -1,5 +1,4 @@
-import Anthropic from "@anthropic-ai/sdk";
-import { postCompletion, providerError } from "./client";
+import { SERVER_HEADERS, anthropicClient, postCompletion, providerError, serverPath } from "./client";
 import { DEFAULT_MODELS, type AiSettings } from "./settings";
 
 export interface ChatMsg {
@@ -27,8 +26,8 @@ function contextText(context: unknown): string {
 }
 
 /** Read an OpenAI-style server-sent-event stream, calling onDelta with each piece of text. */
-async function streamOpenAi(headers: Record<string, string>, body: object, onDelta: (t: string) => void, signal?: AbortSignal): Promise<string> {
-  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+async function streamOpenAi(url: string, headers: Record<string, string>, body: object, onDelta: (t: string) => void, signal?: AbortSignal): Promise<string> {
+  const res = await fetch(url, {
     method: "POST",
     signal,
     headers: { "content-type": "application/json", ...headers },
@@ -70,7 +69,7 @@ async function streamOpenAi(headers: Record<string, string>, body: object, onDel
 export async function chatAi(s: AiSettings, history: ChatMsg[], context: unknown, onDelta: (t: string) => void, signal?: AbortSignal): Promise<string> {
   const system = `${SYSTEM}\n\nScreen context (JSON):\n${contextText(context)}`;
   if (s.provider === "anthropic") {
-    const client = new Anthropic({ apiKey: s.apiKey, dangerouslyAllowBrowser: true, maxRetries: 1 });
+    const client = anthropicClient(s);
     const stream = client.messages.stream(
       { model: s.model || DEFAULT_MODELS.anthropic, max_tokens: 2048, system, messages: history },
       { signal },
@@ -83,9 +82,10 @@ export async function chatAi(s: AiSettings, history: ChatMsg[], context: unknown
   const messages = [{ role: "system", content: system }, ...history];
   if (s.provider === "openai") {
     const body = { model: s.model || DEFAULT_MODELS.openai, messages };
+    if (s.viaServer) return streamOpenAi(serverPath("openai/v1/chat/completions"), SERVER_HEADERS, body, onDelta, signal);
     const headers = { authorization: `Bearer ${s.apiKey}` };
     try {
-      return await streamOpenAi(headers, body, onDelta, signal);
+      return await streamOpenAi("https://api.openai.com/v1/chat/completions", headers, body, onDelta, signal);
     } catch (e) {
       if (!(e instanceof TypeError) || signal?.aborted) throw e;
       const text = await postCompletion("https://api.openai.com/v1/chat/completions", headers, body, true, signal); // network/CORS → local relay
@@ -94,6 +94,11 @@ export async function chatAi(s: AiSettings, history: ChatMsg[], context: unknown
     }
   }
   if (s.provider === "azure") {
+    if (s.viaServer) {
+      const text = await postCompletion(serverPath("azure/chat/completions"), SERVER_HEADERS, { messages }, false, signal);
+      onDelta(text);
+      return text;
+    }
     const base = s.azureEndpoint.trim().replace(/\/+$/, "");
     const url = `${base}/openai/deployments/${encodeURIComponent(s.azureDeployment.trim())}/chat/completions?api-version=${encodeURIComponent(s.azureApiVersion || "2024-10-21")}`;
     const text = await postCompletion(url, { "api-key": s.apiKey }, { messages }, true, signal);
