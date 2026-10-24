@@ -7,14 +7,17 @@ export const CAN_SEND_TO: Record<NodeKind, NodeKind[]> = {
   cdn: ["limiter", "lb", "server"],
   limiter: ["lb", "server"],
   lb: ["server"],
-  server: ["cache", "db", "queue", "kafka", "saga"],
+  server: ["cache", "db", "queue", "kafka", "saga", "llm", "vectordb", "agent"],
   queue: ["worker"],
-  worker: ["db"],
+  worker: ["db", "vectordb"],
   saga: ["db", "kafka"],
   kafka: ["consumer"],
-  consumer: ["db", "cache"],
+  consumer: ["db", "cache", "vectordb"],
   cache: [],
   db: [],
+  agent: ["llm", "vectordb"],
+  llm: [],
+  vectordb: [],
 };
 
 /** Kinds that forward everything to exactly one place. */
@@ -44,6 +47,9 @@ export function wireRefusal(graph: Graph, fromId: string, toId: string): string 
     if (to.kind === "kafka") return "Services publish events to Kafka - wire an API server or a saga to it.";
     if (to.kind === "saga") return "An API server starts the saga for each order - wire a server to it.";
     if (to.kind === "queue") return "API servers put jobs on a queue - wire a server to it.";
+    if (to.kind === "llm") return "Code calls the model: wire an API server or an agent to it.";
+    if (to.kind === "vectordb") return "An API server, agent, worker or consumer queries or fills the vector database.";
+    if (to.kind === "agent") return "An API server starts an agent run for each task - wire a server to it.";
     return `${KINDS[from.kind].label} can't send requests to ${the(to.kind)}.`;
   }
 
@@ -54,7 +60,7 @@ export function wireRefusal(graph: Graph, fromId: string, toId: string): string 
     return `${KINDS[from.kind].label} sends to one place, and it's already wired. Delete that wire first.`;
   }
 
-  if ((from.kind === "server" || from.kind === "saga") && (to.kind === "cache" || to.kind === "queue" || to.kind === "kafka" || to.kind === "saga")) {
+  if ((from.kind === "server" || from.kind === "saga") && ["cache", "queue", "kafka", "saga", "llm", "vectordb", "agent"].includes(to.kind)) {
     const existing = graph.edges.filter((e) => e.from === fromId).map((e) => graph.nodes.find((n) => n.id === e.to)?.kind);
     if (existing.includes(to.kind)) return `This API server already uses a ${KINDS[to.kind].label.toLowerCase()}.`;
   }

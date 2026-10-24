@@ -14,6 +14,11 @@ import {
   shardFactor,
   consumerCap,
   PARTITION_CAP,
+  VECTOR_READ_CAP,
+  VECTOR_WRITE_CAP,
+  agentEffectiveSteps,
+  llmCap,
+  llmMs,
 } from "./catalog";
 import { SAGA_CAUSES, sagaOutcome } from "./saga";
 import type {
@@ -69,6 +74,9 @@ export const DEFAULT_CONDITIONS: Conditions = {
 
 const sum = (bs: Bundle[]) => bs.reduce((a, b) => a + b.rps, 0);
 const pct = (x: number) => `${Math.round(x * 100)}%`;
+/** Base service time of one hop through a node (LLMs depend on the model tier). */
+const serviceMs = (n: SimNode) => (n.kind === "llm" ? llmMs(n.config) : KINDS[n.kind].ms);
+
 export const fmtRps = (x: number) =>
   x >= 1e6 ? `${(x / 1e6).toFixed(1)}M` : x >= 1e4 ? `${Math.round(x / 1e3)}k` : x >= 1e3 ? `${(x / 1e3).toFixed(1)}k` : `${Math.round(x)}`;
 
@@ -97,6 +105,7 @@ function solveOnce(graph: Graph, traffic: Traffic, cond: Conditions, memo?: Memo
   let lagGrowth = 0;
   let inconsistent = 0;
   let sagaOrders = 0;
+  let llmCalls = 0;
   const sagaCauses: Record<string, number> = {};
   let primaryWrites = 0;
 
@@ -104,7 +113,7 @@ function solveOnce(graph: Graph, traffic: Traffic, cond: Conditions, memo?: Memo
   const empty = (): SimResult => ({
     legit, success: 0, successRate: legit > 0 ? 0 : 1, failed: legit, legitLimited: 0,
     bots: traffic.bots, botsBlocked: 0, botsServed: 0, p99: 0, lagMs: 0, stale: 0,
-    queueIn: 0, jobsDone: 0, eventsIn: 0, lagGrowth: 0, inconsistent: 0, sagaOrders: 0, monthlyUsd: graph.nodes.reduce((a, n) => a + nodeMonthlyUsd(n), 0),
+    queueIn: 0, jobsDone: 0, eventsIn: 0, lagGrowth: 0, inconsistent: 0, sagaOrders: 0, llmCalls: 0, monthlyUsd: graph.nodes.reduce((a, n) => a + nodeMonthlyUsd(n), 0),
     nodes, edges: edgeRes, issues,
   });
 
@@ -228,6 +237,8 @@ function solveOnce(graph: Graph, traffic: Traffic, cond: Conditions, memo?: Memo
       const cacheOut = outsC.find((k) => k.kind === "cache" && !isDown(k.id));
       if (dbOut) send(id, dbOut.id, { cls: "job", rps: processed, lat: 0 });
       if (cacheOut) send(id, cacheOut.id, { cls: "read", rps: processed, lat: 0, probe: true });
+      const vecOut = outsC.find((k) => k.kind === "vectordb" && !isDown(k.id));
+      if (vecOut) send(id, vecOut.id, { cls: "job", rps: processed, lat: 0, probe: true });
       continue;
     }
 
@@ -247,10 +258,16 @@ function solveOnce(graph: Graph, traffic: Traffic, cond: Conditions, memo?: Memo
     } else if (n.kind === "worker") util = total / (workerCap() * Math.max(1, n.config.workers ?? 1));
     else if (n.kind === "cache") util = total / cacheCap();
     else if (n.kind === "kafka") util = total / (PARTITION_CAP * Math.max(1, n.config.partitions ?? 1));
+    else if (n.kind === "llm") util = total / llmCap(n.config);
+    else if (n.kind === "vectordb") {
+      const reps = Math.max(1, n.config.replicas ?? 1);
+      const queries = inb.filter((b) => b.cls === "read" || b.cls === "bot").reduce((a, b) => a + b.rps, 0);
+      util = queries / (VECTOR_READ_CAP * reps) + (total - queries) / (VECTOR_WRITE_CAP * reps);
+    }
     else if (n.kind !== "client") util = total / KINDS[n.kind].cap;
 
     const f = util > 1 ? 1 / util : 1;
-    const hop = hopP99(KINDS[n.kind].ms, util);
+    const hop = hopP99(serviceMs(n), util);
     r.util = util;
     r.served = total * f;
     r.dropped = total * (1 - f);
@@ -332,8 +349,15 @@ function solveOnce(graph: Graph, traffic: Traffic, cond: Conditions, memo?: Memo
         const topic = kids.find((k) => k.kind === "kafka" && !isDown(k.id));
         const dbs = kids.filter((k) => k.kind === "db");
         const readDbs = dbs.filter((d) => !(cond.dbFailover && isDown(d.id)));
-        if (!dbs.length && !cache) issue("error", `${title(n)} has no database - there's nowhere to read or store data.`, id);
-        else if (!dbs.length && !sagaKid) issue("error", `${title(n)} has no database - every cache miss and write fails.`, id);
+        const model = kids.find((k) => k.kind === "llm");
+        const agentKid = kids.find((k) => k.kind === "agent");
+        const vectors = kids.find((k) => k.kind === "vectordb");
+        const ai = agentKid ?? model;
+        if (!dbs.length && !cache && !ai) issue("error", `${title(n)} has no database - there's nowhere to read or store data.`, id);
+        else if (!dbs.length && !sagaKid && !ai) issue("error", `${title(n)} has no database - every cache miss and write fails.`, id);
+        else if (ai && !dbs.length && passed.some((b) => b.cls === "write" && b.rps > 0))
+          issue("error", `${title(n)} has no database - conversations, feedback and other writes have nowhere to go.`, id);
+        if (vectors && !ai) issue("warn", `${title(n)} queries the vector database but sends nothing to a model - wire it to an LLM or an agent.`, id);
         let warnedWrite = false;
         for (const b of passed) {
           if (b.cls === "read" || b.cls === "bot") {
@@ -345,6 +369,15 @@ function solveOnce(graph: Graph, traffic: Traffic, cond: Conditions, memo?: Memo
               misses = b.rps * (1 - hitR);
               send(id, cache.id, { ...b, rps: misses, probe: true });
               missLat = b.lat + hopP99(KINDS.cache.ms, memo?.util[cache.id] ?? 0);
+            }
+            if (ai) {
+              // Prompts that miss the (semantic) cache retrieve context, then go to the model - or the agent does both.
+              if (vectors && !agentKid && !isDown(vectors.id) && !isDown(ai.id)) {
+                send(id, vectors.id, { ...b, rps: misses, probe: true });
+                const vu = memo?.util[vectors.id] ?? 0;
+                send(id, ai.id, { ...b, rps: misses * (vu > 1 ? 1 / vu : 1), lat: missLat + hopP99(KINDS.vectordb.ms, vu) });
+              } else send(id, ai.id, { ...b, rps: misses, lat: missLat });
+              continue;
             }
             if (readDbs.length) for (const d of readDbs) send(id, d.id, { ...b, rps: misses / readDbs.length, lat: missLat });
           } else if (b.cls === "write") {
@@ -364,8 +397,39 @@ function solveOnce(graph: Graph, traffic: Traffic, cond: Conditions, memo?: Memo
       }
 
       case "cache":
+      case "vectordb":
         for (const b of passed) complete(b);
         break;
+
+      case "llm":
+        llmCalls += sum(passed);
+        for (const b of passed) complete(b);
+        break;
+
+      case "agent": {
+        const model = kids.find((k) => k.kind === "llm" && !isDown(k.id));
+        const vectors = kids.find((k) => k.kind === "vectordb" && !isDown(k.id));
+        const steps = agentEffectiveSteps(n.config);
+        if (!kids.some((k) => k.kind === "llm")) issue("error", "The agent has no model to think with - wire it to an LLM.", id);
+        if (!n.config.stepLimit)
+          issue("info", `No step limit: a few confused tasks loop up to 30 steps, so the agent averages ${steps.toFixed(1)} model calls per task instead of ${n.config.agentSteps ?? 4}. Turn on the step limit.`, id);
+        for (const b of passed) {
+          if (!model) continue;
+          // Every step is a model call (and a context lookup); a task only finishes if all of them get through.
+          send(id, model.id, { ...b, rps: b.rps * steps, probe: true });
+          const mu = memo?.util[model.id] ?? 0;
+          let lat = b.lat + steps * hopP99(llmMs(model.config), mu);
+          let f = mu > 1 ? 1 / mu : 1;
+          if (vectors) {
+            send(id, vectors.id, { ...b, rps: b.rps * steps, probe: true });
+            const vu = memo?.util[vectors.id] ?? 0;
+            lat += steps * hopP99(KINDS.vectordb.ms, vu);
+            f = Math.min(f, vu > 1 ? 1 / vu : 1);
+          }
+          complete({ ...b, rps: b.rps * f, lat });
+        }
+        break;
+      }
 
       case "db":
         for (const b of passed) complete(b);
@@ -423,9 +487,12 @@ function solveOnce(graph: Graph, traffic: Traffic, cond: Conditions, memo?: Memo
       case "worker": {
         const dbs = kids.filter((k) => k.kind === "db");
         const target = dbs.find((d) => d.id === primary?.id && !isDown(d.id));
-        if (!dbs.length) issue("error", "The workers have no database to write results to.", id);
-        else if (!target && !(graphPrimary && isDown(graphPrimary.id))) issue("error", "The workers aren't wired to the primary database.", id);
+        const vectors = kids.find((k) => k.kind === "vectordb" && !isDown(k.id));
+        if (!dbs.length && !kids.some((k) => k.kind === "vectordb")) issue("error", "The workers have no database to write results to.", id);
+        else if (dbs.length && !target && !(graphPrimary && isDown(graphPrimary.id))) issue("error", "The workers aren't wired to the primary database.", id);
         if (target) for (const b of passed) send(id, target.id, b);
+        // Embedding jobs upsert into the vector index (counted once - at the database when both are wired).
+        if (vectors) for (const b of passed) send(id, vectors.id, { ...b, probe: !!target });
         break;
       }
     }
@@ -507,6 +574,7 @@ function solveOnce(graph: Graph, traffic: Traffic, cond: Conditions, memo?: Memo
     lagGrowth,
     inconsistent,
     sagaOrders,
+    llmCalls,
     monthlyUsd: graph.nodes.reduce((a, n) => a + nodeMonthlyUsd(n), 0),
     nodes,
     edges: edgeRes,

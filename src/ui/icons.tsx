@@ -1,5 +1,8 @@
 import {
+  Bot,
+  Brain,
   Cog,
+  Radar,
   Database,
   Globe,
   Inbox,
@@ -29,6 +32,9 @@ export const KIND_ICON: Record<NodeKind, LucideIcon> = {
   kafka: ScrollText,
   consumer: Users,
   saga: Workflow,
+  llm: Brain,
+  vectordb: Radar,
+  agent: Bot,
 };
 
 /** A small rounded tile in the component's colour - the visual identity of a kind everywhere in the app. */

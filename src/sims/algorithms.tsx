@@ -176,7 +176,7 @@ export const countMin: SimDef<CmsP, CmsR> = {
   View: ({ r }) => (
     <>
       <p className="small muted">Top 10 keys - exact count (bar) vs estimate (line):</p>
-      <LineChart xLabel="key rank" yLabel="count" yFormat={fmt.n} series={[{ name: "exact", color: "var(--muted)", values: r.top.map((t) => t.exact), dashed: true }, { name: "estimate", color: "var(--warm)", values: r.top.map((t) => t.est) }]} />
+      <LineChart xLabel="key rank (1 = most frequent)" xFormat={(i) => `${i + 1}`} yLabel="count" yFormat={fmt.n} series={[{ name: "exact", color: "var(--muted)", values: r.top.map((t) => t.exact), dashed: true }, { name: "estimate", color: "var(--warm)", values: r.top.map((t) => t.est) }]} />
       <Note>Collisions only ever add, so estimates never undercount. Heavy hitters dwarf the collision noise; rare keys are where the sketch is least accurate.</Note>
     </>
   ),

@@ -108,7 +108,7 @@ export const geohashSim: SimDef<GeoP, GeoR> = {
   View: ({ p, r }) => (
     <>
       <p className="small muted">Drivers checked for the first 40 queries:</p>
-      <Bars values={r.perQuery.slice(0, 40)} yFormat={fmt.n} />
+      <Bars values={r.perQuery.slice(0, 40)} yFormat={fmt.n} xLabel="query 1 → 40" />
       <Note>
         At precision {p.precision} a cell is about {r.cellKm.w.toFixed(2)} × {r.cellKm.h.toFixed(2)} km. A rider near a cell edge has neighbours in the next cell - and if the cell is smaller than the
         search radius, even the 8 neighbours miss some. Pick the precision whose cell is at least as big as the radius, then add neighbours.

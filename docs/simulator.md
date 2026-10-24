@@ -35,6 +35,9 @@ explainable on screen.
 | Kafka topic | Accepts `partitions × 10k` events/s; every write a server makes is published as an event; each consumer group gets the full stream |
 | Consumer group | Per-partition capacity = consumerCap × min(1, consumers ÷ partitions); a hot key concentrates traffic on one partition; what isn't processed becomes lag (tracked over the timeline) |
 | Saga orchestrator | Orders become `steps` database writes; the share of orders left inconsistent follows the failure model in `engine/saga.ts` and drops to zero with all five safeguards |
+| LLM inference | Self-hosted model on GPUs. Capacity = `LLM_MODELS[model].cap × replicas` requests/s (×0.15 without continuous batching); cost is per replica (the GPUs one copy needs). Its latency is time to first token, ×1.3 with batching. When an API server has an LLM or agent wired, its reads (prompts) go cache (semantic cache) → vector DB → model instead of the database; writes still go to the database |
+| Vector database | `replicas × 2,000` ANN queries/s or `× 1,000` upserts/s. API servers query it once per prompt; agents once per step; workers and consumers upsert embeddings into it |
+| Agent runtime | Each task makes `agentSteps` model calls (and vector lookups if wired); latency adds up per step. Without the step limit, 4% of tasks loop to 30 steps |
 
 ### Timeline (`timeline.ts`)
 

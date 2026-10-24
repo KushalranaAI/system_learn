@@ -1,5 +1,5 @@
 import { Copy, MousePointerClick, Power, Trash2 } from "lucide-react";
-import { KINDS, SHARD_EFFICIENCY, dbSizes, fmtRps, nodeMonthlyUsd, nodeTitle, sagaOutcome, serverSizes, SAGA_CAUSES, type NodeConfig } from "../engine";
+import { KINDS, LLM_MODELS, RUNAWAY_STEPS, SHARD_EFFICIENCY, agentEffectiveSteps, dbSizes, fmtRps, nodeMonthlyUsd, nodeTitle, sagaOutcome, serverSizes, SAGA_CAUSES, type NodeConfig } from "../engine";
 import { useWorkspace } from "../state/workspace";
 import { KindIcon } from "../ui/icons";
 import { capacityOf } from "./NodeCard";
@@ -180,6 +180,31 @@ export function Inspector() {
                 ? `${(saga.inconsistent * 100).toFixed(1)}% of orders end inconsistent: ${SAGA_CAUSES.filter((k) => saga.causes[k] > 0).map((k) => `${k} ${(saga.causes[k] * 100).toFixed(1)}%`).join(", ")}.`
                 : "Every order either completes or is cleanly cancelled."}
             </p>
+          </>
+        )}
+        {n.kind === "llm" && (
+          <>
+            <label className="setting">
+              <span className="setting-label">Model</span>
+              <select value={c.model ?? "small"} onChange={(e) => set({ model: e.target.value })}>
+                {LLM_MODELS.map((m) => <option key={m.id} value={m.id}>{m.label} - {m.cap} req/s per replica - ${m.usd.toLocaleString()}/mo</option>)}
+              </select>
+              <span className="help">Bigger models answer harder questions but need more GPUs per copy and serve fewer requests on each. Route easy prompts to a small model.</span>
+            </label>
+            <Slider label="Replicas" value={c.replicas ?? 1} min={1} max={64} set={(v) => set({ replicas: v })} help="Each replica is a full copy of the model on its own GPUs. Capacity and cost both grow linearly." />
+            <Toggle on={c.batching !== false} set={(v) => set({ batching: v })} label="Continuous batching" help="Many requests share each forward pass of the model (vLLM-style): several times the throughput for a little more latency per request." />
+          </>
+        )}
+
+        {n.kind === "vectordb" && (
+          <Slider label="Replicas" value={c.replicas ?? 1} min={1} max={32} set={(v) => set({ replicas: v })} help="Each replica holds the whole index in memory and answers nearest-neighbour queries. Upserts (new embeddings) cost every replica." />
+        )}
+
+        {n.kind === "agent" && (
+          <>
+            <Slider label="Steps per task" value={c.agentSteps ?? 4} min={1} max={15} set={(v) => set({ agentSteps: v })} help="Each step is a model call: plan, call a tool, read the result. Ten steps cost ten times the GPU and add ten model latencies." />
+            <Toggle on={c.stepLimit} set={(v) => set({ stepLimit: v })} label="Step limit" help={`Stop a task after its step budget. Without one, a few confused tasks loop up to ${RUNAWAY_STEPS} steps.`} />
+            <p className={`result-line ${c.stepLimit ? "good" : "bad"}`}>{agentEffectiveSteps(c).toFixed(1)} model calls per task on average.</p>
           </>
         )}
       </div>

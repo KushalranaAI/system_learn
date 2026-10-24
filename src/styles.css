@@ -401,8 +401,9 @@ body.resizing .react-flow, body.resizing iframe { pointer-events: none; }
 .tool-sep { width: 1px; height: 20px; background: var(--line); margin: 0 4px; }
 
 /* component rail */
-.rail { flex: none; width: 72px; display: flex; flex-direction: column; gap: 1px; padding: 6px; overflow-y: auto; scrollbar-width: none; border-right: 1px solid var(--line); background: var(--bg-2); }
+.rail { flex: none; width: 72px; display: flex; flex-direction: column; gap: 1px; padding: 6px; overflow-y: auto; scrollbar-width: thin; border-right: 1px solid var(--line); background: var(--bg-2); }
 .rail-title { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--faint); text-align: center; font-weight: 650; margin: 2px 0 4px; }
+.rail-group { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); }
 .rail-item { font: inherit; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 5px 2px 5px; border-radius: 10px; border: 1px solid transparent; background: transparent; color: var(--text-2); font-size: 0.66rem; font-weight: 550; cursor: grab; transition: background 0.15s, border-color 0.15s, color 0.15s; }
 .rail-item:hover { background: var(--panel-2); border-color: var(--line); color: var(--text); }
 .rail-item:active { cursor: grabbing; }
@@ -596,6 +597,20 @@ body.resizing .react-flow, body.resizing iframe { pointer-events: none; }
 .preset:focus-visible { box-shadow: inset var(--ring); }
 .preset.on { color: var(--accent-strong); background: var(--accent-soft); font-weight: 550; }
 .preset.on svg { color: var(--accent-strong); }
+.preset-name { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.preset-source { font-size: 0.74rem; color: var(--faint); font-weight: 450; }
+.preset-search { display: flex; align-items: center; gap: 8px; padding: 0 10px; border: 1px solid var(--line); border-radius: var(--r); background: var(--panel); color: var(--faint); }
+.preset-search input { all: unset; flex: 1; min-width: 0; padding: 8px 0; font-size: 0.85rem; color: var(--text); }
+.preset-search:focus-within { box-shadow: var(--ring); }
+.preset-group { display: flex; flex-direction: column; gap: 6px; }
+.preset-group-head { all: unset; box-sizing: border-box; cursor: pointer; display: flex; align-items: center; gap: 6px; padding: 4px 2px; font-size: 0.84rem; font-weight: 600; color: var(--text-2); }
+.preset-group-head:hover { color: var(--text); }
+.preset-group-head:focus-visible { box-shadow: var(--ring); border-radius: 6px; }
+.preset-group-head .chev { transition: transform 0.15s; color: var(--faint); }
+.preset-group.open .preset-group-head .chev { transform: rotate(90deg); }
+.scenario-story summary { cursor: pointer; font-size: 0.82rem; font-weight: 600; color: var(--accent-strong); }
+.scenario-story .prose { font-size: 0.82rem; margin-top: 6px; max-height: 340px; overflow: auto; }
+.scenario-lesson { display: inline-flex; align-items: center; gap: 6px; font-size: 0.8rem; }
 .my-scenarios { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 4px; }
 .my-scenarios li { display: flex; justify-content: space-between; align-items: center; gap: 6px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 4px 4px 4px 12px; font-size: 0.86rem; }
 .my-scenarios .linkish { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
@@ -692,9 +707,9 @@ details.more.card { border: 1px solid var(--line); padding: 14px 18px; margin: 1
 .panel-head h4 { margin: 0; }
 .simcontrols { display: flex; flex-direction: column; gap: 16px; }
 .sim-results { min-width: 0; display: flex; flex-direction: column; gap: 14px; }
-.simstats { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
-.stat { display: flex; flex-direction: column; gap: 2px; padding: 10px 14px; border-radius: var(--r); background: var(--panel); border: 1px solid var(--line); }
-.stat .label { font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); font-weight: 600; }
+.simstats { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; }
+.stat { display: flex; flex-direction: column; justify-content: space-between; gap: 8px; padding: 12px 14px; border-radius: var(--r); background: var(--panel); border: 1px solid var(--line); min-height: 78px; }
+.stat .label { font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.06em; line-height: 1.35; color: var(--muted); font-weight: 600; }
 .stat .value { font-size: 1.2rem; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
 .insight { color: var(--text); border-radius: var(--r-lg); padding: 16px 18px; background: var(--panel); border: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; }
 .insight.good { border-color: #22c55e40; background: linear-gradient(160deg, #22c55e10, transparent 55%), var(--panel); }
@@ -712,11 +727,15 @@ details.more.card { border: 1px solid var(--line); padding: 14px 18px; margin: 1
 .goals-inline { flex-direction: row; flex-wrap: wrap; }
 .goals-inline li { flex: 1 1 220px; }
 .sim-view { display: flex; flex-direction: column; gap: 12px; padding: 16px; border-radius: var(--r-lg); background: var(--bg-2); border: 1px solid var(--line); min-width: 0; }
-.simchart { width: 100%; height: auto; background: var(--bg); border: 1px solid var(--line); border-radius: var(--r-sm); }
+.simchart { display: block; max-width: 100%; background: var(--bg); border: 1px solid var(--line); border-radius: var(--r-sm); overflow: visible; }
 .simchart .grid { stroke: var(--line-2); stroke-dasharray: 2 4; }
-.simchart .axis { fill: var(--muted); font-size: 10px; font-family: var(--font); }
-.chart-wrap { display: flex; flex-direction: column; gap: 6px; }
-.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 0.78rem; color: var(--muted); }
+.simchart .axis { fill: var(--muted); font-size: 11px; font-family: var(--font); font-variant-numeric: tabular-nums; }
+.simchart .label-bg { paint-order: stroke; stroke: var(--bg); stroke-width: 4px; stroke-linejoin: round; }
+.chart-wrap { display: flex; flex-direction: column; gap: 8px; margin: 0; min-width: 0; width: 100%; }
+.chart-ylabel { font-size: 0.74rem; font-weight: 600; color: var(--muted); letter-spacing: 0.02em; }
+.chart-foot { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; }
+.chart-xlabel { font-size: 0.74rem; color: var(--muted); margin-left: auto; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 0.78rem; color: var(--muted); }
 .legend i { display: inline-block; width: 12px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 5px; }
 .simnote { color: var(--text-2); margin: 0; line-height: 1.55; }
 .chain { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -726,7 +745,7 @@ details.more.card { border: 1px solid var(--line); padding: 14px 18px; margin: 1
 .simstep { flex: 1; min-height: 0; display: grid; grid-template-columns: 360px minmax(0, 1fr); }
 .simstep > .lab-side { overflow: hidden; background: var(--bg-2); border-right: 1px solid var(--line); min-height: 0; }
 .simstep-main { overflow: auto; padding: 20px; }
-.simrunner.compact { grid-template-columns: 1fr; }
+.simrunner.compact { grid-template-columns: minmax(0, 1fr); }
 .simrunner.compact .sim-controls { position: static; }
 .simrunner.compact .simcontrols { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px 22px; }
 
@@ -813,7 +832,7 @@ details.privacy summary { color: var(--text-2); }
 }
 @media (max-width: 900px) {
   .hero { grid-template-columns: 1fr; gap: 32px; }
-  .simrunner, .simrunner.compact, .simstep { grid-template-columns: 1fr; }
+  .simrunner, .simrunner.compact, .simstep { grid-template-columns: minmax(0, 1fr); }
   .sim-controls { position: static; }
   .simstep > .lab-side { max-height: 50vh; border-right: 0; border-bottom: 1px solid var(--line); }
   .ws, .ws.no-left, .ws.no-right { grid-template-columns: minmax(0, 1fr); }

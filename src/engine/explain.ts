@@ -1,4 +1,4 @@
-import { KINDS, dbSize, dbSizes, nodeTitle, serverSizes } from "./catalog";
+import { KINDS, LLM_MODELS, agentEffectiveSteps, dbSize, dbSizes, llmModel, nodeTitle, serverSizes } from "./catalog";
 import { sagaOutcome, SAGA_CAUSES } from "./saga";
 import { fmtRps, simulate } from "./solve";
 import { TIMELINE, summarize, type Incident, type Resilience, type Tick } from "./timeline";
@@ -69,6 +69,11 @@ function describePaths(g: Graph): string[] {
           ? "Writes go to a queue and get an instant reply; workers apply them to the database later."
           : "Writes go to the primary database.",
     );
+    const agent = has("agent")[0];
+    const llm = has("llm")[0];
+    const vec = has("vectordb")[0];
+    if (agent) out.push(`Prompts run as agent tasks of ~${agentEffectiveSteps(agent.config).toFixed(1)} model calls each${vec ? ", each step looking up context in the vector database" : ""}.`);
+    else if (llm) out.push(`Prompts${vec ? " retrieve context from the vector database, then" : ""} go to ${llm.config.replicas ?? 1} replica(s) of the ${llmModel(llm.config.model).label.split(" · ")[0].toLowerCase()} model.`);
     const topic = has("kafka")[0];
     if (topic) out.push(`Every write is also published to Kafka (${topic.config.partitions ?? 1} partitions), read by ${has("consumer").length} consumer group(s).`);
   } else if (g.nodes.length) out.push("There's no API server yet, so nothing can handle requests.");
@@ -86,7 +91,7 @@ export function explainDesign(g: Graph, traffic: Traffic, res: SimResult, resili
   if (!client) advice.push({ severity: "bad", problem: "There's no client.", why: "The client is where requests start.", fix: "Add a Client from the toolbar.", tradeoff: "None - every design needs one." });
   if (!nodes.some((n) => n.kind === "server"))
     advice.push({ severity: "bad", problem: "There's no API server.", why: "Something has to run your code for each request.", fix: "Add an API server and wire Client → API server → Database.", tradeoff: "None yet - start simple." });
-  if (!nodes.some((n) => n.kind === "db") && nodes.some((n) => n.kind === "server"))
+  if (!nodes.some((n) => n.kind === "db") && nodes.some((n) => n.kind === "server") && !nodes.some((n) => n.kind === "llm" || n.kind === "agent"))
     advice.push({ severity: "bad", problem: "There's no database.", why: "Data has to survive restarts, so it lives in a database.", fix: "Add a Database and wire every API server to it.", tradeoff: "None yet." });
 
   // Overloaded and hot components, worst first.
@@ -127,6 +132,21 @@ export function explainDesign(g: Graph, traffic: Traffic, res: SimResult, resili
         fix: "Add worker processes - as long as the database has room for their writes.", tradeoff: "More workers move load onto the database; a backlog that drains after a burst is often fine.",
         action: { kind: "config", nodeId: n.id, patch: { workers: (n.config.workers ?? 1) + 2 }, label: "Add 2 workers" },
       });
+    } else if (n.kind === "llm") {
+      const smaller = LLM_MODELS[LLM_MODELS.findIndex((m) => m.id === (n.config.model ?? "small")) - 1];
+      advice.push({
+        severity: sev, problem: head,
+        why: `${whyHot} GPUs are the scarcest, most expensive part of the design.`,
+        fix: n.config.batching === false
+          ? "Turn on continuous batching first - it multiplies what each replica serves."
+          : `Answer repeats from a semantic cache, route easy prompts to a smaller model${smaller ? ` (${smaller.label.split(" · ")[0]})` : ""}, cut agent steps - or add replicas.`,
+        tradeoff: "Replicas cost thousands each per month. Caching risks a stale or slightly wrong answer; a smaller model answers hard questions worse.",
+        action: n.config.batching === false
+          ? { kind: "config", nodeId: n.id, patch: { batching: true }, label: "Turn on batching" }
+          : { kind: "config", nodeId: n.id, patch: { replicas: Math.ceil((n.config.replicas ?? 1) * Math.min(2, r.util * 1.25)) }, label: "Add replicas" },
+      });
+    } else if (n.kind === "vectordb") {
+      advice.push({ severity: sev, problem: head, why: whyHot, fix: "Add replicas, or cache retrieval results for repeated questions.", tradeoff: "Every replica holds the whole index in memory and must apply every upsert.", action: { kind: "config", nodeId: n.id, patch: { replicas: (n.config.replicas ?? 1) + 1 }, label: "Add a replica" } });
     } else if (n.kind === "kafka") {
       advice.push({ severity: sev, problem: head, why: "Each partition accepts a limited write rate.", fix: "Add partitions.", tradeoff: "More partitions mean more parallelism but more files and leader elections, and changing the count reshuffles keys.", action: { kind: "config", nodeId: n.id, patch: { partitions: (n.config.partitions ?? 1) * 2 }, label: "Double the partitions" } });
     } else {

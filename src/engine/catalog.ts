@@ -36,6 +36,41 @@ export const DB_SIZES: DbSize[] = [
   { id: "xl", label: "16 vCPU · 64 GB", readCap: 45_000, writeCap: 11_000, usd: 720 },
 ];
 
+/**
+ * Self-hosted model tiers. `cap` is chat requests/s one replica serves with continuous batching
+ * (≈500 output tokens each); `ttftMs` is time to first token when idle. A replica is the whole
+ * set of GPUs one copy of the model needs, and `usd` is that set rented for a month.
+ */
+export interface LlmModel {
+  id: string;
+  label: string;
+  cap: number;
+  ttftMs: number;
+  usd: number;
+}
+
+export const LLM_MODELS: LlmModel[] = [
+  { id: "small", label: "Small (8B) · 1 GPU", cap: 12, ttftMs: 60, usd: 1_500 },
+  { id: "medium", label: "Medium (70B) · 4 GPUs", cap: 5, ttftMs: 150, usd: 6_000 },
+  { id: "large", label: "Frontier (400B+) · 8 GPUs", cap: 2.5, ttftMs: 320, usd: 12_000 },
+];
+export const llmModel = (id?: string) => LLM_MODELS.find((m) => m.id === id) ?? LLM_MODELS[0];
+/** Without batching a GPU decodes one or two sequences at a time: a fraction of the batched throughput. */
+export const UNBATCHED_SHARE = 0.15;
+export const llmCap = (c: NodeConfig) => llmModel(c.model).cap * Math.max(1, c.replicas ?? 1) * (c.batching === false ? UNBATCHED_SHARE : 1);
+/** Batching trades a little latency per request for far more throughput. */
+export const llmMs = (c: NodeConfig) => llmModel(c.model).ttftMs * (c.batching === false ? 1 : 1.3);
+
+export const VECTOR_READ_CAP = 2_000; // ANN queries/s per vector index replica
+export const VECTOR_WRITE_CAP = 1_000; // embedding upserts/s per replica
+/** Share of agent tasks that loop until something stops them, and how far they go with no step limit. */
+export const RUNAWAY_SHARE = 0.04;
+export const RUNAWAY_STEPS = 30;
+export const agentEffectiveSteps = (c: NodeConfig) => {
+  const s = Math.max(1, c.agentSteps ?? 4);
+  return c.stepLimit ? s : s * (1 - RUNAWAY_SHARE) + RUNAWAY_STEPS * RUNAWAY_SHARE;
+};
+
 /** Keys never spread perfectly: N shards give a bit less than N× capacity. */
 export const SHARD_EFFICIENCY = 0.85;
 export const shardFactor = (shards?: number) => {
@@ -177,9 +212,24 @@ export const KINDS: Record<NodeKind, KindSpec> = {
     blurb: "Runs each order as a sequence of local transactions (reserve stock, charge, confirm) with compensations. Its safeguards decide how many orders end inconsistent.",
     ms: 1, cap: 50_000, usd: 60, defaults: { sagaSteps: 3, compensate: false, queryTimeouts: false, idempotencyKeys: false, outbox: false, dedupeConsumers: false },
   },
+  llm: {
+    kind: "llm", label: "LLM inference", short: "LLM", icon: "🧠", color: "#c084fc",
+    blurb: "A self-hosted language model on GPUs. Each replica serves only a handful of requests per second, costs thousands a month, and its latency shown here is time to first token. Continuous batching multiplies throughput.",
+    ms: 60, cap: 0, usd: 0, defaults: { model: "small", replicas: 1, batching: true },
+  },
+  vectordb: {
+    kind: "vectordb", label: "Vector database", short: "Vectors", icon: "🧭", color: "#2dd4bf",
+    blurb: "Stores embeddings and answers nearest-neighbour queries (HNSW-style index) for retrieval-augmented generation. Queries are cheap next to the model; re-embedding and upserts cost more.",
+    ms: 6, cap: 0, usd: 0, defaults: { replicas: 1 },
+  },
+  agent: {
+    kind: "agent", label: "Agent runtime", short: "Agent", icon: "🤖", color: "#f472b6",
+    blurb: "Runs a task as a loop: the model thinks, calls a tool, reads the result, repeats. Every step is another model call, so steps multiply GPU load and latency. A step limit stops runaway loops.",
+    ms: 1, cap: 20_000, usd: 80, defaults: { agentSteps: 4, stepLimit: false },
+  },
 };
 
-export const PALETTE: NodeKind[] = ["client", "cdn", "limiter", "lb", "server", "cache", "db", "queue", "worker", "kafka", "consumer", "saga"];
+export const PALETTE: NodeKind[] = ["client", "cdn", "limiter", "lb", "server", "cache", "db", "queue", "worker", "kafka", "consumer", "saga", "llm", "vectordb", "agent"];
 
 export function nodeMonthlyUsd(n: SimNode): number {
   switch (n.kind) {
@@ -193,6 +243,10 @@ export function nodeMonthlyUsd(n: SimNode): number {
       return 50 + 10 * (n.config.partitions ?? 1);
     case "consumer":
       return 30 * (n.config.consumers ?? 1);
+    case "llm":
+      return llmModel(n.config.model).usd * Math.max(1, n.config.replicas ?? 1);
+    case "vectordb":
+      return 250 * Math.max(1, n.config.replicas ?? 1);
     default:
       return KINDS[n.kind].usd;
   }

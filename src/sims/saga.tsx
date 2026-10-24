@@ -107,7 +107,7 @@ export const saga: SimDef<P, R> = {
   ],
   View: ({ p, r }) => (
     <>
-      <Bars values={PROBLEMS.map((k) => r.problems[k])} labels={PROBLEMS.map((k) => k)} color={(v) => (v ? "var(--bad)" : "var(--good)")} />
+      <Bars yLabel="orders left inconsistent, by problem" values={PROBLEMS.map((k) => r.problems[k])} labels={PROBLEMS.map((k) => k)} color={(v) => (v ? "var(--bad)" : "var(--good)")} />
       <Note>
         Out of {p.orders.toLocaleString()} orders, {PROBLEMS.map((k) => `${r.problems[k]} ${k}`).join(" · ")}. Every one of these is a support ticket - or money
         you owe. A correct saga cancels cleanly or completes; it never ends in between.

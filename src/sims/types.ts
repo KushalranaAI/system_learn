@@ -52,7 +52,7 @@ export const fmt = {
   s: (v: number) => (!Number.isFinite(v) ? "never" : `${v.toFixed(v < 10 ? 1 : 0)} s`),
   n: (v: number) => (!Number.isFinite(v) ? "∞" : v >= 1e6 ? `${(v / 1e6).toFixed(1)}M` : v >= 1e4 ? `${Math.round(v / 1e3)}k` : v >= 1e3 ? `${(v / 1e3).toFixed(1)}k` : `${Math.round(v * 10) / 10}`),
   x: (v: number) => `${v.toFixed(2)}×`,
-  kb: (v: number) => (v >= 1024 ? `${(v / 1024).toFixed(1)} MB` : `${v.toFixed(1)} KB`),
+  kb: (v: number) => (v >= 1024 ? `${(v / 1024).toFixed(1)} MB` : v >= 0.1 ? `${v.toFixed(1)} KB` : `${Math.round(v * 1024)} B`),
 };
 
 export function goalMet(g: Goal, metrics: Record<string, number>): boolean {

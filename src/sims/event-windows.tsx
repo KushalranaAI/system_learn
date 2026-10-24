@@ -119,7 +119,6 @@ export const eventWindows: SimDef<P, R> = {
           { name: "First result", color: "var(--warm)", values: r.first.slice(0, -1) },
           { name: "Final result", color: "var(--good)", values: r.final.slice(0, -1) },
         ]}
-        yMax={Math.max(...r.truth) * 1.25}
       />
       <Note>
         Processing-time windows are instant but put late events in the wrong window. Event-time windows wait for the watermark; allowed lateness lets late events

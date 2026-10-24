@@ -6,6 +6,10 @@ import {
   cacheCap,
   consumerCap,
   PARTITION_CAP,
+  VECTOR_READ_CAP,
+  agentEffectiveSteps,
+  llmCap,
+  llmModel,
   sagaOutcome,
   workerCap,
   dbSize,
@@ -35,6 +39,12 @@ export function capacityOf(n: SimNode): { cap: number; unit: string } {
       return { cap: KINDS.saga.cap, unit: "orders/s" };
     case "cache":
       return { cap: cacheCap(), unit: "ops/s" };
+    case "llm":
+      return { cap: llmCap(n.config), unit: "calls/s" };
+    case "vectordb":
+      return { cap: VECTOR_READ_CAP * (n.config.replicas ?? 1), unit: "queries/s" };
+    case "agent":
+      return { cap: KINDS.agent.cap, unit: "tasks/s" };
     default:
       return { cap: KINDS[n.kind].cap, unit: "req/s" };
   }
@@ -66,6 +76,12 @@ export function subtitleOf(n: SimNode): string {
       const on = [c.compensate, c.queryTimeouts, c.idempotencyKeys, c.outbox, c.dedupeConsumers].filter(Boolean).length;
       return `${c.sagaSteps ?? 3} steps · ${on}/5 safeguards`;
     }
+    case "llm":
+      return `${c.replicas ?? 1} × ${llmModel(c.model).label.split(" · ")[0]}${c.batching === false ? " · no batching" : ""}`;
+    case "vectordb":
+      return `${c.replicas ?? 1} replica${(c.replicas ?? 1) > 1 ? "s" : ""} · ANN index`;
+    case "agent":
+      return `~${agentEffectiveSteps(c).toFixed(1)} model calls/task${c.stepLimit ? " · step limit" : ""}`;
     default:
       return "sends traffic";
   }
@@ -83,7 +99,7 @@ function NodeCardImpl({ id, selected }: NodeProps) {
   const util = r?.util ?? 0;
   const down = r?.down;
   const isClient = n.kind === "client";
-  const showSub = detailed || ["saga", "kafka", "consumer", "server", "db", "cache", "cdn", "limiter"].includes(n.kind);
+  const showSub = detailed || ["saga", "kafka", "consumer", "server", "db", "cache", "cdn", "limiter", "llm", "vectordb", "agent"].includes(n.kind);
   const alert =
     n.kind === "consumer" && (r?.lagGrowth ?? 0) > 0.5
       ? `Lag +${fmtRps(r!.lagGrowth!)}/s`
