@@ -90,10 +90,34 @@ function aiProxy(): Plugin {
   };
 }
 
+/**
+ * Production-only Content-Security-Policy. The saved AI key is encrypted, but script running inside the page could still
+ * ask the browser to use it, so the page may only run this app's own scripts and only talk to the AI providers.
+ * (Dev mode is exempt: Vite's hot reload needs inline scripts.)
+ */
+function contentSecurityPolicy(): Plugin {
+  const csp = [
+    "default-src 'self'",
+    "script-src 'self'",
+    "style-src 'self' 'unsafe-inline'", // React sets inline style attributes
+    "img-src 'self' data: blob:",
+    "font-src 'self' data:",
+    "connect-src 'self' https://api.openai.com https://api.anthropic.com https://*.openai.azure.com https://*.cognitiveservices.azure.com https://*.services.ai.azure.com",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'none'",
+  ].join("; ");
+  return {
+    name: "system-learn-csp",
+    apply: "build",
+    transformIndexHtml: () => [{ tag: "meta", attrs: { "http-equiv": "Content-Security-Policy", content: csp }, injectTo: "head-prepend" }],
+  };
+}
+
 // `base: "./"` keeps the build portable (GitHub Pages, any static host, or a local folder).
 export default defineConfig({
   base: "./",
-  plugins: [react(), benchApi(), aiProxy()],
+  plugins: [react(), benchApi(), aiProxy(), contentSecurityPolicy()],
   server: { port: 5173 },
   build: { chunkSizeWarningLimit: 2000 },
   test: { environment: "node", include: ["src/**/*.test.ts"] },

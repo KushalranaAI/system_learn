@@ -1,4 +1,4 @@
-import { ArrowUp, Eraser, KeyRound, MessageCircle, Sparkles, Square, X } from "lucide-react";
+import { ArrowUp, Eraser, KeyRound, Lock, MessageCircle, Sparkles, Square, X } from "lucide-react";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -32,6 +32,7 @@ export function ChatWidget() {
   const presenter = useWorkspace((s) => s.presenter);
   const active = useAiActive();
   const provider = useAi((s) => s.settings.provider);
+  const status = useAi((s) => s.status);
   const route = useLocation().pathname;
   const sources = useSources();
   const [draft, setDraft] = useState("");
@@ -77,13 +78,24 @@ export function ChatWidget() {
           </header>
 
           {!active ? (
-            <div className="chat-empty">
-              <span className="empty-icon"><KeyRound size={20} /></span>
-              <b>Connect an AI key to chat</b>
-              <p>Add your OpenAI or Anthropic key. The tutor then answers questions about whatever you have open, using your own numbers.</p>
-              <Link className="btn primary" to="/ai" onClick={() => setOpen(false)}>Add an AI key</Link>
-              <span className="hint">Your key stays in this browser.</span>
-            </div>
+            status === "locked" ? (
+              <div className="chat-empty">
+                <span className="empty-icon"><Lock size={20} /></span>
+                <b>Your saved key is locked</b>
+                <p>It's encrypted with your passphrase. Unlock it once and the tutor is ready until you close the browser.</p>
+                <Link className="btn primary" to="/ai" onClick={() => setOpen(false)}>Unlock</Link>
+              </div>
+            ) : status === "loading" ? (
+              <div className="chat-empty"><span className="typing"><i /><i /><i /></span><p>Loading your saved key…</p></div>
+            ) : (
+              <div className="chat-empty">
+                <span className="empty-icon"><KeyRound size={20} /></span>
+                <b>Connect an AI key to chat</b>
+                <p>Add your OpenAI or Anthropic key. The tutor then answers questions about whatever you have open, using your own numbers.</p>
+                <Link className="btn primary" to="/ai" onClick={() => setOpen(false)}>Add an AI key</Link>
+                <span className="hint">Saved encrypted in this browser, so you add it once.</span>
+              </div>
+            )
           ) : (
             <>
               <div className="chat-body">
