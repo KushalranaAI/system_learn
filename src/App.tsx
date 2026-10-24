@@ -13,6 +13,7 @@ import { useAiActive } from "./ai/settings";
 import { useWorkspace } from "./state/workspace";
 import { Logo } from "./ui/icons";
 import { ChatWidget } from "./chat/ChatWidget";
+import { Credit } from "./ui/Credit";
 
 const LINKS = [
   { to: "/path", label: "Path", icon: RouteIcon },
@@ -64,6 +65,7 @@ export function App() {
           <Route path="/ai" element={<AiSettingsPage />} />
           <Route path="*" element={<Home />} />
         </Routes>
+        <Credit />
         <ChatWidget />
       </div>
     </HashRouter>

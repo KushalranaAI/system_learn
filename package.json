@@ -4,6 +4,16 @@
   "private": true,
   "description": "Learn system design by building it: an interactive, local-first architecture simulator with lessons and labs.",
   "license": "MIT",
+  "author": {
+    "name": "Kushal Rana",
+    "url": "https://www.linkedin.com/in/kushal-rana"
+  },
+  "homepage": "https://kushalranaai.github.io/system_learn/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KushalranaAI/system_learn.git"
+  },
+  "bugs": "https://github.com/KushalranaAI/system_learn/issues",
   "type": "module",
   "scripts": {
     "start": "node scripts/start.mjs",

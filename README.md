@@ -3,6 +3,10 @@
 **Learn system design by building it.** Wire clients, load balancers, API servers, caches, queues and databases on a
 canvas, push traffic through them, break things on purpose, and watch what happens.
 
+Built by **[Kushal Rana](https://www.linkedin.com/in/kushal-rana)** ·
+[LinkedIn](https://www.linkedin.com/in/kushal-rana) · [X](https://x.com/KushalranaAI) ·
+[Medium](https://kushalrana448.medium.com/) · [YouTube](https://www.youtube.com/@naaku-o2x)
+
 - 🎛️ **Sandbox**: a free canvas with live traffic, animated request flow, cost and p99 latency. Components include
   load balancers, servers, caches, CDNs, rate limiters, replicated and sharded databases, queues and workers,
   **Kafka topics, consumer groups and saga orchestrators**.
@@ -113,4 +117,15 @@ Please keep contributions original: learn from anywhere, but write in your own w
 
 ## License
 
-Code: MIT. Lesson content in `content/`: CC BY-SA 4.0.
+Code: MIT. Lesson content in `content/`: CC BY-SA 4.0. Copyright (c) 2026 Kushal Rana and contributors.
+
+## About the author
+
+System Learn is built and maintained by Kushal Rana.
+
+- LinkedIn: <https://www.linkedin.com/in/kushal-rana>
+- X: <https://x.com/KushalranaAI>
+- Medium: <https://kushalrana448.medium.com/>
+- YouTube: <https://www.youtube.com/@naaku-o2x>
+
+The links and name in the footer of every page come from `src/brand.ts`.
