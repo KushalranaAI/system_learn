@@ -1,4 +1,4 @@
-import { Activity, Boxes, Cpu, FlaskConical, Route as RouteIcon, Sparkles } from "lucide-react";
+import { Activity, Boxes, Cpu, FlaskConical, Lock, Route as RouteIcon, Sparkles } from "lucide-react";
 import { HashRouter, NavLink, Route, Routes } from "react-router-dom";
 import { Home } from "./pages/Home";
 import { LabPlayer } from "./pages/LabPlayer";
@@ -9,7 +9,7 @@ import { Sandbox } from "./pages/Sandbox";
 import { SimPage, SimsPage } from "./pages/SimsPage";
 import { MachinePage } from "./pages/MachinePage";
 import { AiSettingsPage } from "./pages/AiSettingsPage";
-import { useAiActive } from "./ai/settings";
+import { useAi, useAiActive } from "./ai/settings";
 import { useWorkspace } from "./state/workspace";
 import { Logo } from "./ui/icons";
 import { ChatWidget } from "./chat/ChatWidget";
@@ -26,6 +26,7 @@ const LINKS = [
 function Nav() {
   const presenter = useWorkspace((s) => s.presenter);
   const ai = useAiActive();
+  const locked = useAi((s) => s.status === "locked");
   if (presenter) return null;
   return (
     <header className="nav">
@@ -40,8 +41,8 @@ function Nav() {
         ))}
       </nav>
       <span className="grow" />
-      <NavLink to="/ai" className={`ai-chip${ai ? " on" : ""}`} title={ai ? "AI explanations are on" : "Add an AI key for tailored explanations"}>
-        <Sparkles size={14} /> <span className="nav-label">{ai ? "AI on" : "Add AI"}</span>
+      <NavLink to="/ai" className={`ai-chip${ai ? " on" : ""}${locked ? " locked" : ""}`} title={locked ? "Your saved AI key is locked: enter your passphrase" : ai ? "AI explanations are on" : "Add an AI key for tailored explanations"}>
+        {locked ? <Lock size={14} /> : <Sparkles size={14} />} <span className="nav-label">{locked ? "Unlock AI" : ai ? "AI on" : "Add AI"}</span>
       </NavLink>
     </header>
   );

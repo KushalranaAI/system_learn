@@ -117,6 +117,7 @@ p { margin: 0 0 0.8em; }
 .ai-chip { display: flex; align-items: center; gap: 6px; font-size: 0.82rem; font-weight: 500; color: var(--muted); padding: 5px 11px; border-radius: 99px; border: 1px solid var(--line); }
 .ai-chip:hover { color: var(--text); text-decoration: none; border-color: var(--line-2); }
 .ai-chip.on { color: #c7d2fe; border-color: #818cf855; background: #818cf814; }
+.ai-chip.locked { color: var(--warm); border-color: #eab30866; background: #eab3080f; }
 .ai-chip.active { border-color: var(--line-2); color: var(--text); }
 
 .page { flex: 1; overflow: auto; padding: 48px max(24px, calc((100vw - 1120px) / 2)) 96px; }
@@ -548,6 +549,7 @@ body.resizing .react-flow, body.resizing iframe { pointer-events: none; }
 .settings { display: flex; flex-direction: column; gap: 18px; }
 .settings:empty { display: none; }
 .settings-sub { margin: 4px 0 -6px; }
+.ai-form .settings-sub { margin: 14px 0 4px; }
 .setting { display: flex; flex-direction: column; gap: 6px; font-size: 0.86rem; }
 .setting-label { font-weight: 550; color: var(--text); }
 .setting-value { font-variant-numeric: tabular-nums; color: var(--accent-strong); }
@@ -914,3 +916,16 @@ details.privacy summary { color: var(--text-2); }
 .credit-links a { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 6px; color: var(--muted); transition: color 0.15s, background 0.15s; }
 .credit-links a:hover { color: var(--text); background: var(--panel-2); text-decoration: none; }
 .credit-links a:focus-visible { box-shadow: var(--ring); }
+
+/* ---------- key protection ---------- */
+.protect { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: var(--r); background: var(--bg-2); border: 1px solid var(--line); }
+.protect .setting-label { display: flex; align-items: center; gap: 6px; }
+.protect .segmented { align-self: flex-start; }
+.protect .segmented button { display: inline-flex; align-items: center; gap: 6px; }
+.protect .hint b { color: var(--text); }
+.hint.good { color: var(--good); }
+.hint.warm { color: var(--warm); }
+.pass-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+@media (max-width: 640px) { .pass-grid { grid-template-columns: 1fr; } }
+.unlock-card { display: flex; flex-direction: column; gap: 12px; margin-bottom: 14px; border-color: var(--accent-line); }
+.unlock-card .linkish { align-self: flex-start; color: var(--muted); }
