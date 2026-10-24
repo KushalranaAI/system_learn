@@ -374,7 +374,8 @@ body.resizing .react-flow, body.resizing iframe { pointer-events: none; }
 .tabs-wide { align-self: center; margin: 0 0 2px 4px; flex: none; }
 .ws-left, .ws-right { overflow: auto; background: var(--bg-2); min-height: 0; }
 .ws-left { border-right: 1px solid var(--line); }
-.ws-right { border-left: 1px solid var(--line); display: flex; flex-direction: column; overflow-x: hidden; }
+.ws-right { border-left: 1px solid var(--line); display: flex; flex-direction: column; overflow-x: hidden; container-type: inline-size; }
+@container (max-width: 420px) { .tabs button svg { display: none; } .tabs button { font-size: 0.8rem; } }
 .ws-main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
 .ws-stage { flex: 1; min-height: 0; display: flex; }
 .ws-board { position: relative; flex: 1; min-width: 0; min-height: 0; }
@@ -904,3 +905,12 @@ details.privacy summary { color: var(--text-2); }
   .chat { right: 12px; bottom: 76px; }
   .chat-fab { right: 12px; bottom: 16px; }
 }
+
+/* ---------- credit strip: a quiet signature at the bottom of every page ---------- */
+.credit { flex: none; display: flex; align-items: center; gap: 12px; height: 30px; padding: 0 14px; border-top: 1px solid var(--line); background: var(--bg); font-size: 0.72rem; color: var(--faint); position: relative; z-index: 1; }
+.credit-text a { color: var(--muted); font-weight: 600; }
+.credit-text a:hover { color: var(--accent-strong); text-decoration: none; }
+.credit-links { display: flex; align-items: center; gap: 2px; }
+.credit-links a { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 6px; color: var(--muted); transition: color 0.15s, background 0.15s; }
+.credit-links a:hover { color: var(--text); background: var(--panel-2); text-decoration: none; }
+.credit-links a:focus-visible { box-shadow: var(--ring); }

@@ -1,7 +1,7 @@
 # Content
 
 Original, openly licensed lessons for learning backend system design from zero
-(CC BY-SA 4.0).
+(CC BY-SA 4.0), by Kushal Rana and contributors.
 
 - [curriculum.md](curriculum.md) is the full syllabus: 3 parts, 19 modules,
   and a hands-on exercise in every lesson.
