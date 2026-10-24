@@ -11,12 +11,17 @@ import { quorum } from "./quorum";
 import { retryStorm } from "./retry-storm";
 import { saga } from "./saga";
 import { serviceChain } from "./service-chain";
+import { agentReliability } from "./agents";
+import { kvCache, llmBatching, modelCascade, semanticCache } from "./ai";
+import { annIndex, ragRetrieval } from "./rag";
+import { stagedRollout } from "./rollout";
 import type { SimDef } from "./types";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const SIMS: SimDef<any, any>[] = [
   cacheStampede, pushVsPoll, serviceChain, retryStorm, quorum, hashRing, kafkaLog, saga, eventWindows,
   bloom, hyperloglog, countMin, merkle, gossip, raft, tokenBucket, skipList, lsmBtree, geohashSim, snowflake, wal,
+  stagedRollout, llmBatching, kvCache, semanticCache, modelCascade, ragRetrieval, annIndex, agentReliability,
 ];
 
 export const simById = (id: string) => SIMS.find((s) => s.id === id);

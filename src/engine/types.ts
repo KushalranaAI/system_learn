@@ -10,7 +10,10 @@ export type NodeKind =
   | "worker"
   | "kafka"
   | "consumer"
-  | "saga";
+  | "saga"
+  | "llm"
+  | "vectordb"
+  | "agent";
 
 export interface NodeConfig {
   /** server / db machine size id */
@@ -41,6 +44,16 @@ export interface NodeConfig {
   idempotencyKeys?: boolean;
   outbox?: boolean;
   dedupeConsumers?: boolean;
+  /** llm: model tier id (see LLM_MODELS) */
+  model?: string;
+  /** llm: model replicas (each a full set of GPUs); vectordb: index replicas */
+  replicas?: number;
+  /** llm: continuous batching - many requests share each forward pass */
+  batching?: boolean;
+  /** agent: LLM calls (think → act → observe) per task, on average */
+  agentSteps?: number;
+  /** agent: hard cap on steps, so a confused agent can't loop forever */
+  stepLimit?: boolean;
 }
 
 export interface SimNode {
@@ -144,6 +157,8 @@ export interface SimResult {
   inconsistent: number;
   /** orders per second handled by sagas */
   sagaOrders: number;
+  /** model calls per second reaching LLM replicas */
+  llmCalls: number;
   monthlyUsd: number;
   nodes: Record<string, NodeResult>;
   edges: Record<string, EdgeResult>;

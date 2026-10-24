@@ -13,7 +13,7 @@ export function Palette({ kinds = PALETTE }: { kinds?: NodeKind[] }) {
         const spec = KINDS[k];
         const disabled = k === "client" && graph.nodes.some((n) => n.kind === "client");
         const usd = nodeMonthlyUsd({ id: "", kind: k, x: 0, y: 0, config: spec.defaults });
-        return (
+        const item = (
           <button
             key={k}
             className="rail-item"
@@ -27,6 +27,8 @@ export function Palette({ kinds = PALETTE }: { kinds?: NodeKind[] }) {
             <span>{spec.short}</span>
           </button>
         );
+        // The AI components start a group of their own, below the classic ones.
+        return k === "llm" ? [<span key="ai-title" className="rail-title rail-group">AI</span>, item] : item;
       })}
     </nav>
   );

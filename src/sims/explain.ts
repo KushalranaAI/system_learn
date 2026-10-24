@@ -16,6 +16,7 @@ export interface SimExplain {
 type Fn = (p: any, m: Record<string, number>) => SimExplain;
 
 const pct = fmt.pct;
+const usdShort = (v: number) => (!Number.isFinite(v) ? "-" : v >= 1 ? `$${v.toFixed(2)}` : `$${v.toFixed(3)}`);
 
 export const EXPLAIN: Record<string, Fn> = {
   "push-vs-poll": (p, m) => ({
@@ -168,5 +169,67 @@ export const EXPLAIN: Record<string, Fn> = {
     good: m.peak <= 1 && m.failedPct <= 0.001,
     fix: "Add TTL jitter so keys expire at different times, coalesce misses so each key costs one query, and serve stale while refreshing.",
     tradeoff: "Jitter makes freshness less predictable; stale-while-revalidate shows slightly old data; coalescing adds waiting for the first request.",
+  }),
+  "llm-batching": (p, m) => ({
+    scenario: `A ${p.model === "70b" ? "70B" : "8B"} model on ${p.gpus} GPU${p.gpus === 1 ? "" : "s"}, up to ${p.batch} sequence${p.batch === 1 ? "" : "s"} decoding together; each request has a ${fmt.n(p.promptTokens)}-token prompt and a ${fmt.n(p.outputTokens)}-token answer.`,
+    outcome: !m.fits
+      ? "The model's weights don't fit on these GPUs with room left for any KV cache, so it can't serve at all."
+      : `The replica produces ${fmt.n(m.tokensPerSec)} tokens/s (${m.reqPerSec.toFixed(1)} requests/s) at ${usdShort(m.costPerM)} per million tokens. Each user sees ${fmt.n(m.userTps)} tokens/s, first token after ${fmt.ms(m.ttftMs)}.`,
+    good: m.fits === 1 && m.tokensPerSec >= 2000 && m.userTps >= 20,
+    fix: !m.fits ? "Add GPUs (tensor parallelism) or pick the smaller model." : m.userTps < 20 ? "The batch is so big each user's stream crawls - lower it, or add replicas." : "Raise the batch size: one decode step reads all the weights anyway, so more sequences per step are nearly free.",
+    tradeoff: "Bigger batches cut cost per token but slow every user's stream and need KV-cache memory for each sequence; long prompts delay the first token for everyone sharing the GPU.",
+  }),
+  "kv-cache": (p, m) => ({
+    scenario: `A ${p.model === "8b" ? "8B" : "70B"} model in ${p.weightBits}-bit weights on ${p.gpus} × ${p.gpuMemGB} GB GPUs, ${fmt.n(p.contextTokens)}-token max context, ${p.allocation === "paged" ? "PagedAttention" : "contiguous"} KV allocation; you need ${p.targetSeqs} conversations at once.`,
+    outcome: m.maxSeqs < 1
+      ? `It doesn't fit: the ${Math.round(m.weightsGB)} GB of weights leave no room for even one sequence's KV cache.`
+      : `${fmt.n(m.maxSeqs)} sequences fit (${m.kvPerSeqGB.toFixed(2)} GB of KV cache each)${m.fits ? "" : ` - short of the ${p.targetSeqs} you need`}. ${pct(m.waste)} of reserved KV memory is never used.`,
+    good: m.fits === 1,
+    fix: p.allocation === "contiguous" ? "Switch to PagedAttention so each conversation only holds the blocks it actually uses." : p.kvBits === 16 ? "Store the KV cache in FP8 (half the memory per token), or add GPUs." : "Quantise the weights, shorten the max context, or add GPUs.",
+    tradeoff: "Lower precision saves memory at a small quality cost; shorter max context limits long documents; more GPUs cost money and add communication overhead.",
+  }),
+  "semantic-cache": (p, m) => ({
+    scenario: `${p.repeatPct}% of questions repeat an earlier one in other words. A question gets a cached answer when its embedding's cosine similarity to a cached question is at least ${p.threshold}.`,
+    outcome: `${pct(m.hitRate)} of questions hit the cache, saving ${pct(m.costSaved)} of model cost (average latency ${fmt.ms(m.avgLatencyMs)}) - but ${fmt.pct2(m.wrongRate)} of all answers were cached for a different question.`,
+    good: m.wrongRate <= 0.01 && m.hitRate >= 0.25,
+    fix: m.wrongRate > 0.01 ? "Raise the threshold: look-alike questions with different answers are slipping through." : "Lower the threshold a little: you're missing genuine repeats.",
+    tradeoff: "A higher threshold is safer but saves less; scope the cache by tenant and language, and don't cache personal or time-sensitive answers at all.",
+  }),
+  "model-cascade": (p, m) => ({
+    scenario: p.mode === "cascade"
+      ? `Every request goes to a small model first; answers with confidence below ${p.threshold} escalate to the large model. ${p.hardPct}% of requests are hard.`
+      : `Every request goes to the ${p.mode} model. ${p.hardPct}% of requests are hard.`,
+    outcome: `${pct(m.quality)} correct at ${pct(m.costVsLarge)} of the large-only cost, ${fmt.ms(m.avgLatencyMs)} on average${p.mode === "cascade" ? `; ${pct(m.escalated)} escalated` : ""}.`,
+    good: m.quality >= 0.94 && m.costVsLarge <= 0.5,
+    fix: p.mode === "large" ? "Try a cascade: most requests are easy and the small model gets them right." : p.mode === "small" ? "Escalate low-confidence answers to the large model (cascade)." : m.quality < 0.94 ? "Raise the threshold so more doubtful answers escalate." : "Lower the threshold so fewer requests pay for both models.",
+    tradeoff: "Escalated requests pay for both models and wait for both; the cascade is only as good as the small model's confidence signal.",
+  }),
+  "rag-retrieval": (p, m) => ({
+    scenario: `Help-centre articles split into ${p.chunkTokens}-token chunks with ${p.overlapPct}% overlap; the top ${p.topK} chunks${p.hybrid ? " from hybrid (BM25 + vector) search" : " from vector search"}${p.reranker ? ", reranked by a cross-encoder," : ""} go into the prompt.`,
+    outcome: `The answer is in the prompt for ${pct(m.recall)} of questions, using ${fmt.n(m.contextTokens)} context tokens and ${usdShort(m.costPer1k)} per 1,000 queries.`,
+    good: m.recall >= 0.9 && m.contextTokens <= 2500,
+    fix: m.recall < 0.9 ? "Use chunks of a few hundred tokens with ~15-20% overlap, add hybrid search for exact terms, and rerank the top 50." : "Cut k: you're paying for context the model doesn't need.",
+    tradeoff: "More chunks raise recall but cost tokens, latency and distract the model; a reranker adds ~100 ms and a little cost per query.",
+  }),
+  "ann-index": (p, m) => ({
+    scenario: `${fmt.n(p.vectors)} vectors of ${p.dims} dimensions, searched ${p.mode === "exact" ? "exactly (brute force)" : `with HNSW (M = ${p.m}, efSearch = ${p.efSearch})`}.`,
+    outcome: `Recall@10 is ${pct(m.recall)} at ${m.latencyMs < 10 ? `${m.latencyMs.toFixed(2)} ms` : fmt.ms(m.latencyMs)} per query on one core, using ${m.memoryGB.toFixed(1)} GB.`,
+    good: m.recall >= 0.95 && m.latencyMs <= 5,
+    fix: p.mode === "exact" ? "Switch to an HNSW index: it checks a few thousand vectors instead of all of them." : m.recall < 0.95 ? "Raise efSearch (or M) until recall is high enough." : "Lower efSearch to trade a little recall for speed.",
+    tradeoff: "Higher efSearch and M raise recall but cost latency (and M costs memory); at very large scale, quantisation or disk-based indexes trade some recall for memory.",
+  }),
+  "agent-reliability": (p, m) => ({
+    scenario: `An agent task needs ${p.steps} steps that each succeed ${pct(p.stepSuccess)} of the time${p.verify ? `, each verified and retried up to ${p.retries}×` : ", with no verification"}; step limit ${p.stepLimit >= 100 ? "off" : p.stepLimit}.`,
+    outcome: `${pct(m.success)} of tasks end correct, ${pct(m.silentWrong)} end wrong while reporting success, ${pct(m.aborted)} hit the step limit. ${m.avgCalls.toFixed(1)} steps on average, ${fmt.n(m.p99Calls)} at p99; $${m.costPerTask.toFixed(3)} per task.`,
+    good: m.success >= 0.85 && m.silentWrong <= 0.08 && m.p99Calls <= 30,
+    fix: !p.verify ? "Verify each step (tests, schemas, a checker) and retry the ones that fail." : m.p99Calls > 30 ? "Set a step limit so looping runs stop instead of burning calls." : "Fewer steps, a better model per step, or more retries.",
+    tradeoff: "Verification and retries add calls, cost and latency; a step limit fails a few long tasks that might have finished.",
+  }),
+  "staged-rollout": (p, m) => ({
+    scenario: `A bad change ships ${p.strategy === "global" ? "to the whole fleet at once" : p.strategy === "canary" ? `to a ${p.canaryPct}% canary, then everyone after ${p.bakeMin} min` : `in ${p.waves} waves starting at ${p.canaryPct}%, ${p.bakeMin} min apart`}. It's detected after ${p.detectMin} min and rolled back ${p.autoRollback ? "automatically" : `by hand ${p.manualMin} min later`}.`,
+    outcome: `At worst ${pct(m.peakAffected)} of the fleet was broken; impact was ${m.impactHours.toFixed(2)} whole-fleet hours${Number.isFinite(m.mitigatedMin) ? `, fully recovered after ${Math.round(m.mitigatedMin)} min` : " and broken hosts still need hands-on repair after 6 hours"}.`,
+    good: m.peakAffected <= 0.05 && m.impactHours <= 0.1,
+    fix: p.strategy === "global" ? "Release in stages: a small canary first, with bake time longer than your time to detect." : m.peakAffected > 0.05 ? "Make the bake time longer than detection, or the first stage smaller." : "Turn on automatic rollback.",
+    tradeoff: "Staged rollouts take hours; urgent fixes (security content) need a fast path that is still staged, just quicker.",
   }),
 };

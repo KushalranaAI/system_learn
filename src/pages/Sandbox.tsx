@@ -1,9 +1,11 @@
 import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from "lz-string";
-import { ChevronRight, Download, Link2, Plus, RefreshCw, Trash2, Upload } from "lucide-react";
+import { BookOpen, ChevronRight, Download, Link2, Plus, RefreshCw, Search, Trash2, Upload } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import type { Graph, Incident, Resilience, Traffic } from "../engine";
-import { PRESETS } from "../presets";
+import { PRESET_CATEGORIES, type Preset } from "../presets";
+import { SCENARIOS, scenarioById } from "../scenarios";
+import { Markdown } from "../ui/Markdown";
 import { loadProgress, updateProgress, type Scenario } from "../progress";
 import { MEASURED, savedProfileId } from "../state/profile";
 import { useChatSource } from "../chat/store";
@@ -28,6 +30,8 @@ function decodeShared(d: string): Shared | null {
   }
 }
 
+type Current = Pick<Preset, "title" | "blurb" | "tryThis" | "source" | "story" | "lesson">;
+
 function applyScenario(s: Shared) {
   const ws = useWorkspace.getState();
   ws.load(s.graph, s.traffic);
@@ -41,7 +45,9 @@ export function Sandbox() {
   const presenter = useWorkspace((s) => s.presenter);
   const profileId = useWorkspace((s) => s.profileId);
   const [scenarios, setScenarios] = useState<Scenario[]>(() => loadProgress().scenarios ?? []);
-  const [current, setCurrent] = useState<{ title: string; blurb: string; tryThis: string[] } | null>(null);
+  const [current, setCurrent] = useState<Current | null>(null);
+  const [query, setQuery] = useState("");
+  const [openCat, setOpenCat] = useState<string | null>(() => scenarioById(params.get("preset"))?.category ?? "basics");
   const [saving, setSaving] = useState(false);
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
@@ -50,7 +56,7 @@ export function Sandbox() {
     const ws = useWorkspace.getState();
     ws.setProfile(savedProfileId());
     const shared = params.get("d") && decodeShared(params.get("d")!);
-    const preset = PRESETS.find((p) => p.id === params.get("preset"));
+    const preset = scenarioById(params.get("preset"));
     const saved = loadProgress().sandbox;
     ws.setResilience({ retries: true, dbFailover: false });
     if (shared) {
@@ -58,11 +64,15 @@ export function Sandbox() {
       setCurrent(shared.name ? { title: shared.name, blurb: shared.description ?? "", tryThis: [] } : null);
     } else if (preset) {
       ws.load(preset.graph, preset.traffic);
+      if (preset.resilience) ws.setResilience(preset.resilience);
+      if (preset.incident) ws.setIncident(preset.incident);
       setCurrent(preset);
+      if (preset.category) setOpenCat(preset.category);
     } else if (saved) ws.load(saved.graph, saved.traffic);
     else {
-      ws.load(PRESETS[1].graph, PRESETS[1].traffic);
-      setCurrent(PRESETS[1]);
+      const first = scenarioById("single")!;
+      ws.load(first.graph, first.traffic);
+      setCurrent(first);
     }
     return useWorkspace.subscribe((s, prev) => {
       if (s.graph !== prev.graph || s.traffic !== prev.traffic) updateProgress((p) => (p.sandbox = { graph: s.graph, traffic: s.traffic }));
@@ -72,7 +82,7 @@ export function Sandbox() {
 
   useChatSource("sandbox", {
     label: current ? `Sandbox · ${current.title}` : "Sandbox",
-    build: () => ({ scenario: current ? { title: current.title, about: current.blurb, suggestedExercises: current.tryThis } : "a free canvas", savedScenarios: scenarios.map((s) => s.name) }),
+    build: () => ({ scenario: current ? { title: current.title, source: current.source, about: current.blurb, story: current.story, suggestedExercises: current.tryThis } : "a free canvas", savedScenarios: scenarios.map((s) => s.name) }),
   });
 
   const snapshot = (): Shared => {
@@ -145,9 +155,18 @@ export function Sandbox() {
 
       {current && (
         <section className="scenario-card">
-          <span className="tag">Current scenario</span>
+          <span className="tag">{current.source ?? "Current scenario"}</span>
           <b>{current.title}</b>
           {current.blurb && <p>{current.blurb}</p>}
+          {current.story && (
+            <details className="scenario-story">
+              <summary>The story behind it</summary>
+              <Markdown>{current.story}</Markdown>
+            </details>
+          )}
+          {current.lesson && (
+            <Link className="scenario-lesson" to={`/lesson/${current.lesson}`}><BookOpen size={13} /> Full write-up: lesson {current.lesson}</Link>
+          )}
           {current.tryThis.length > 0 && (
             <ol className="try-list">
               {current.tryThis.map((t, i) => <li key={t}><span className="step-num">{i + 1}</span><span>{t}</span></li>)}
@@ -157,15 +176,39 @@ export function Sandbox() {
       )}
 
       <section className="side-section">
-        <h4>Starting points</h4>
-        <div className="preset-list">
-          {PRESETS.map((p) => (
-            <button key={p.id} className={`preset${current?.title === p.title ? " on" : ""}`} onClick={() => setParams({ preset: p.id })} title={p.blurb}>
-              <span>{p.title}</span>
-              <ChevronRight size={14} />
-            </button>
-          ))}
-        </div>
+        <h4>Starting points <span className="muted small">{SCENARIOS.length}</span></h4>
+        <label className="preset-search">
+          <Search size={14} />
+          <input placeholder="Search: Netflix, outage, RAG, chat..." value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Search starting points" />
+        </label>
+        {PRESET_CATEGORIES.map((cat) => {
+          const q = query.trim().toLowerCase();
+          const list = SCENARIOS.filter((p) => p.category === cat.id && (!q || `${p.title} ${p.source ?? ""} ${p.blurb}`.toLowerCase().includes(q)));
+          if (!list.length) return null;
+          const open = !!q || openCat === cat.id;
+          return (
+            <div key={cat.id} className={`preset-group${open ? " open" : ""}`}>
+              <button className="preset-group-head" onClick={() => setOpenCat(open && !q ? null : cat.id)} aria-expanded={open} title={cat.blurb}>
+                <ChevronRight size={14} className="chev" />
+                <span className="grow">{cat.title}</span>
+                <span className="muted small">{list.length}</span>
+              </button>
+              {open && (
+                <div className="preset-list">
+                  {list.map((p) => (
+                    <button key={p.id} className={`preset${current?.title === p.title ? " on" : ""}`} onClick={() => setParams({ preset: p.id })} title={p.blurb}>
+                      <span className="preset-name">
+                        <span>{p.title}</span>
+                        {p.source && <span className="preset-source">{p.source}</span>}
+                      </span>
+                      <ChevronRight size={14} />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </section>
 
       <section className="side-section">

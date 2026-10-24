@@ -198,6 +198,65 @@ describe("kafka, consumers and sagas", () => {
   });
 });
 
+describe("AI components", () => {
+  function rag(llmConfig: SimNode["config"]) {
+    const c = node("client", {}, "c");
+    const s = node("server", { size: "m" }, "s");
+    const cache = node("cache", { hitRatio: 0.3 }, "cache");
+    const v = node("vectordb", { replicas: 1 }, "v");
+    const m = node("llm", llmConfig, "m");
+    const d = node("db", { size: "s" }, "d");
+    const g: Graph = { nodes: [c, s, cache, v, m, d], edges: [] };
+    wire(g, c, s); wire(g, s, cache); wire(g, s, v); wire(g, s, m); wire(g, s, d);
+    return g;
+  }
+
+  it("prompts that miss the semantic cache retrieve context, then reach the model; writes still go to the database", () => {
+    const r = simulate(rag({ model: "small", replicas: 10, batching: true }), { reads: 100, writes: 5, bots: 0 });
+    expect(r.nodes.v.load).toBeCloseTo(70); // 30% answered by the cache
+    expect(r.llmCalls).toBeCloseTo(70);
+    expect(r.nodes.d.writes).toBeCloseTo(5);
+    expect(r.successRate).toBeCloseTo(1);
+    expect(r.monthlyUsd).toBeGreaterThan(15_000); // GPUs dominate the bill
+  });
+
+  it("continuous batching multiplies what each replica serves", () => {
+    const batched = simulate(rag({ model: "small", replicas: 6, batching: true }), { reads: 100, writes: 0, bots: 0 });
+    const plain = simulate(rag({ model: "small", replicas: 6, batching: false }), { reads: 100, writes: 0, bots: 0 });
+    expect(batched.successRate).toBeCloseTo(1);
+    expect(plain.successRate).toBeLessThan(0.5);
+  });
+
+  it("an agent multiplies model calls by its steps, and runaway loops add more without a step limit", () => {
+    const c = node("client", {}, "c");
+    const s = node("server", { size: "m" }, "s");
+    const a = node("agent", { agentSteps: 5, stepLimit: true }, "a");
+    const m = node("llm", { model: "small", replicas: 60 }, "m");
+    const d = node("db", {}, "d");
+    const g: Graph = { nodes: [c, s, a, m, d], edges: [] };
+    wire(g, c, s); wire(g, s, a); wire(g, s, d); wire(g, a, m);
+    const limited = simulate(g, { reads: 100, writes: 0, bots: 0 });
+    expect(limited.nodes.m.load).toBeCloseTo(500);
+    expect(limited.successRate).toBeCloseTo(1);
+    a.config.stepLimit = false;
+    const loose = simulate(g, { reads: 100, writes: 0, bots: 0 });
+    expect(loose.nodes.m.load).toBeGreaterThan(550);
+    expect(loose.p99).toBeGreaterThan(limited.p99);
+  });
+
+  it("workers can fill the vector index, and the model refuses wires from the client", () => {
+    const g = rag({});
+    const q = node("queue", {}, "q");
+    const w = node("worker", { workers: 4 }, "w");
+    g.nodes.push(q, w);
+    wire(g, g.nodes[1], q); wire(g, q, w); wire(g, w, g.nodes[3]);
+    const r = simulate(g, { reads: 1, writes: 500, bots: 0 });
+    expect(r.nodes.v.load).toBeGreaterThan(400);
+    expect(r.issues.some((i) => i.text.includes("no database"))).toBe(false);
+    expect(wireRefusal(g, "c", "m")).toMatch(/model/);
+  });
+});
+
 describe("the guide", () => {
   it("explains an overloaded design with a fix, a trade-off and a one-click action", async () => {
     const { explainDesign, explainTimeline } = await import("./explain");

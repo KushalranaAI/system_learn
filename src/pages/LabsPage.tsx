@@ -68,7 +68,7 @@ export function LabsPage() {
         })}
       </div>
 
-      {filter === "all" && (
+      {filter === "all" && UPCOMING.length > 0 && (
         <section className="upcoming">
           <h2 className="section-title">Coming soon</h2>
           <div className="upcoming-list">

@@ -13,6 +13,9 @@ const RANK: Record<NodeKind, number> = {
   kafka: 5,
   consumer: 6,
   db: 7,
+  agent: 5,
+  llm: 6,
+  vectordb: 7,
 };
 
 /** Layered left-to-right layout by request order; empty ranks are skipped. */

@@ -1,4 +1,4 @@
-import type { Graph, NodeConfig, NodeKind, Traffic } from "./engine";
+import type { Graph, Incident, NodeConfig, NodeKind, Resilience, Traffic } from "./engine";
 import { autoLayout } from "./state/layout";
 
 /** Tiny builder so presets and labs read like the diagram they describe. */
@@ -36,6 +36,16 @@ function defaults(kind: NodeKind): NodeConfig {
   }
 }
 
+export type PresetCategory = "basics" | "interview" | "case-study" | "outage" | "ai";
+
+export const PRESET_CATEGORIES: { id: PresetCategory; title: string; blurb: string }[] = [
+  { id: "basics", title: "The basics", blurb: "Small designs to learn the canvas." },
+  { id: "interview", title: "Interview classics", blurb: "The most-asked design questions, as a starting design to explain and improve." },
+  { id: "case-study", title: "How the big ones scale", blurb: "Real architectures from companies serving millions." },
+  { id: "outage", title: "Famous outages", blurb: "Replay what broke, then change the design so it wouldn't." },
+  { id: "ai", title: "AI systems", blurb: "LLM serving, retrieval and agents under real load." },
+];
+
 export interface Preset {
   id: string;
   title: string;
@@ -44,6 +54,17 @@ export interface Preset {
   tryThis: string[];
   graph: Graph;
   traffic: Traffic;
+  /** where it's listed in the sandbox (default "basics") */
+  category?: PresetCategory;
+  /** who and when, for case studies and outages, e.g. "Cloudflare · Nov 2025" */
+  source?: string;
+  /** Markdown: what happened or how it works, and what the design on the canvas stands for */
+  story?: string;
+  /** lesson id with the full write-up, e.g. "24.2" */
+  lesson?: string;
+  /** preselected in the timeline, so pressing Run replays the failure */
+  incident?: Incident;
+  resilience?: Resilience;
 }
 
 export const PRESETS: Preset[] = [
