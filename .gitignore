@@ -6,3 +6,8 @@ dist
 src/state/calibration/measured.json
 bench/results/
 bench/tmp/
+
+# secrets: never commit your real keys (copy .env.example to .env)
+.env
+.env.*
+!.env.example

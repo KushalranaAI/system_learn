@@ -3,6 +3,7 @@ import { BRAND, type BrandLinkId } from "../brand";
 
 /** Small hand-drawn brand marks (lucide has no brand icons). Filled, 24x24, coloured by `currentColor`. */
 const MARKS: Record<BrandLinkId, ReactNode> = {
+  portfolio: <path fillRule="evenodd" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zM4.1 11h3.4c.1-2 .5-3.8 1.1-5.2A8 8 0 0 0 4.1 11zm0 2a8 8 0 0 0 4.5 5.2c-.6-1.4-1-3.2-1.1-5.2H4.1zm5.4 0c.2 2.4.8 4.3 1.5 5.4.3.4.7.6 1 .6s.7-.2 1-.6c.7-1.1 1.3-3 1.5-5.4H9.5zm0-2h5c-.2-2.4-.8-4.3-1.5-5.4-.3-.4-.7-.6-1-.6s-.7.2-1 .6c-.7 1.1-1.3 3-1.5 5.4zm7 2c-.1 2-.5 3.8-1.1 5.2a8 8 0 0 0 4.5-5.2h-3.4zm3.4-2a8 8 0 0 0-4.5-5.2c.6 1.4 1 3.2 1.1 5.2h3.4z" />,
   linkedin: (
     <>
       <rect x="2.5" y="9" width="4" height="12.5" rx="0.6" />

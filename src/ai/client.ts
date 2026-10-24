@@ -47,6 +47,19 @@ function parseJsonGuide(text: string): AiGuide {
   return parsed.data;
 }
 
+/** Headers the local relay requires; a custom header forces a CORS preflight that other websites can't pass. */
+export const SERVER_HEADERS = { "x-system-learn": "1" };
+export const serverPath = (rest: string) => `./api/ai-server/${rest}`;
+
+/** An Anthropic client: direct with the learner's own key, or pointed at the local relay, which holds the key. */
+export function anthropicClient(s: AiSettings): Anthropic {
+  if (s.viaServer) {
+    const base = new URL("./api/ai-server/anthropic", typeof document !== "undefined" ? document.baseURI : "http://localhost/").href;
+    return new Anthropic({ apiKey: "managed-by-server", baseURL: base, defaultHeaders: SERVER_HEADERS, dangerouslyAllowBrowser: true, maxRetries: 1 });
+  }
+  return new Anthropic({ apiKey: s.apiKey, dangerouslyAllowBrowser: true, maxRetries: 1 });
+}
+
 /** Turn a failed provider response into a short readable error. */
 export function providerError(status: number, text: string): Error {
   let msg = text;
@@ -83,7 +96,7 @@ async function chatCompletions(url: string, headers: Record<string, string>, bod
 export async function askAi(s: AiSettings, task: string, context: unknown, signal?: AbortSignal): Promise<AiGuide> {
   const prompt = userPrompt(task, context);
   if (s.provider === "anthropic") {
-    const client = new Anthropic({ apiKey: s.apiKey, dangerouslyAllowBrowser: true, maxRetries: 1 });
+    const client = anthropicClient(s);
     const response = await client.messages.parse(
       {
         model: s.model || DEFAULT_MODELS.anthropic,
@@ -104,6 +117,7 @@ export async function askAi(s: AiSettings, task: string, context: unknown, signa
   ];
   if (s.provider === "openai") {
     const body = { model: s.model || DEFAULT_MODELS.openai, messages, response_format: { type: "json_object" } };
+    if (s.viaServer) return chatCompletions(serverPath("openai/v1/chat/completions"), SERVER_HEADERS, body, false, signal);
     const headers = { authorization: `Bearer ${s.apiKey}` };
     try {
       return await chatCompletions("https://api.openai.com/v1/chat/completions", headers, body, false, signal);
@@ -113,6 +127,7 @@ export async function askAi(s: AiSettings, task: string, context: unknown, signa
     }
   }
   if (s.provider === "azure") {
+    if (s.viaServer) return chatCompletions(serverPath("azure/chat/completions"), SERVER_HEADERS, { messages, response_format: { type: "json_object" } }, false, signal);
     const base = s.azureEndpoint.trim().replace(/\/+$/, "");
     const url = `${base}/openai/deployments/${encodeURIComponent(s.azureDeployment.trim())}/chat/completions?api-version=${encodeURIComponent(s.azureApiVersion || "2024-10-21")}`;
     const body = { messages, response_format: { type: "json_object" } };

@@ -13,7 +13,7 @@ function mockFetch(responder: (url: string, init: RequestInit) => unknown) {
     const headers = new Headers(input instanceof Request ? input.headers : (init.headers as HeadersInit));
     const body = typeof init.body === "string" ? init.body : input instanceof Request ? await input.clone().text() : "";
     calls.push({ url, init, headers, body });
-    if (url.startsWith("./")) throw new TypeError("no dev server in tests");
+    if (url.startsWith("./api/ai-proxy")) throw new TypeError("no dev server in tests");
     return new Response(JSON.stringify(responder(url, init)), { status: 200, headers: { "content-type": "application/json" } });
   });
   return calls;
@@ -61,5 +61,47 @@ describe("AI providers", () => {
   it("reports a provider error message", async () => {
     vi.stubGlobal("fetch", async () => new Response(JSON.stringify({ error: { message: "Incorrect API key" } }), { status: 401 }));
     await expect(askAi({ ...base, provider: "openai" }, "explain", {})).rejects.toThrow(/401: Incorrect API key/);
+  });
+});
+
+describe("AI providers: key kept in the local server's .env (viaServer)", () => {
+  const server: AiSettings = { ...base, apiKey: "", viaServer: true };
+
+  it("OpenAI: calls the relay, with no key and no direct call to OpenAI", async () => {
+    const calls = mockFetch(() => ({ choices: [{ message: { content: JSON.stringify(guide) } }] }));
+    const g = await askAi({ ...server, provider: "openai" }, "explain", {});
+    expect(g.headline).toBe(guide.headline);
+    expect(calls).toHaveLength(1);
+    expect(calls[0].url).toBe("./api/ai-server/openai/v1/chat/completions");
+    const headers = calls[0].init.headers as Record<string, string>;
+    expect(headers["x-system-learn"]).toBe("1");
+    expect(JSON.stringify(headers).toLowerCase()).not.toMatch(/authorization|bearer|api-key/);
+  });
+
+  it("Azure: calls the relay and sends neither the endpoint nor a key", async () => {
+    const calls = mockFetch(() => ({ choices: [{ message: { content: JSON.stringify(guide) } }] }));
+    await askAi({ ...server, provider: "azure" }, "explain", {});
+    expect(calls[0].url).toBe("./api/ai-server/azure/chat/completions");
+    expect(JSON.stringify(calls[0].init.headers).toLowerCase()).not.toMatch(/api-key|authorization/);
+    expect(calls[0].body).not.toContain("azure.com");
+  });
+
+  it("Anthropic: points the SDK at the relay and sends only a placeholder key", async () => {
+    const calls = mockFetch(() => ({
+      id: "msg_1", type: "message", role: "assistant", model: "claude-opus-5-5", stop_reason: "end_turn", stop_sequence: null,
+      content: [{ type: "text", text: JSON.stringify(guide) }],
+      usage: { input_tokens: 1, output_tokens: 1 },
+    }));
+    await askAi({ ...server, provider: "anthropic" }, "explain", {});
+    expect(calls[0].url).toBe("http://localhost/api/ai-server/anthropic/v1/messages");
+    expect(calls[0].headers.get("x-system-learn")).toBe("1");
+    // the SDK carries the placeholder (x-api-key or bearer, depending on version); the relay swaps in the real key
+    expect(calls[0].headers.get("x-api-key") ?? calls[0].headers.get("authorization")).toMatch(/managed-by-server/);
+    expect(JSON.stringify([...calls[0].headers.entries()])).not.toContain("test-key");
+  });
+
+  it("a failed relay call surfaces the relay's message", async () => {
+    vi.stubGlobal("fetch", async () => new Response(JSON.stringify({ error: { message: "No openai key is configured in .env on this computer." } }), { status: 501 }));
+    await expect(askAi({ ...server, provider: "openai" }, "explain", {})).rejects.toThrow(/501: No openai key is configured/);
   });
 });

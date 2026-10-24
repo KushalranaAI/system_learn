@@ -29,6 +29,9 @@ npm run dev        # the app with hot reload at http://localhost:5173
 npm start          # one command for newcomers: installs, benchmarks your machine once (~25 s), then starts the app
 ```
 
+Optional: to try the AI features, copy `.env.example` to `.env` and add your own key (see the README). `.env` is git-ignored;
+never commit it or paste keys into an issue or pull request.
+
 ## Check your change before opening the pull request
 
 ```bash
@@ -45,6 +48,7 @@ This is exactly what CI runs. If it passes on your machine it will pass there.
 | A new lab | `src/labs/` | [docs/writing-labs.md](docs/writing-labs.md) |
 | A new simulation | `src/sims/` | look at an existing one such as `hash-ring.tsx` |
 | Simulator numbers or behaviour | `src/engine/` | [docs/simulator.md](docs/simulator.md) |
+| The local AI-key relay | `server/` | covered by tests in `server/ai-relay.test.ts` |
 | UI | `src/pages/`, `src/workspace/`, `src/styles.css` | reuse the design tokens at the top of `styles.css` |
 
 Good first contributions: fix a typo or an unclear sentence in a lesson, improve an explanation, add a missing

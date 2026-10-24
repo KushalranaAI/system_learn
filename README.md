@@ -3,8 +3,8 @@
 **Learn system design by building it.** Wire clients, load balancers, API servers, caches, queues and databases on a
 canvas, push traffic through them, break things on purpose, and watch what happens.
 
-Built by **[Kushal Rana](https://www.linkedin.com/in/kushal-rana)** ·
-[LinkedIn](https://www.linkedin.com/in/kushal-rana) · [X](https://x.com/KushalranaAI) ·
+Built by **[Kushal Rana](https://kushalranaai.github.io/)** ·
+[Portfolio](https://kushalranaai.github.io/) · [LinkedIn](https://www.linkedin.com/in/kushal-rana) · [X](https://x.com/KushalranaAI) ·
 [Medium](https://kushalrana448.medium.com/) · [YouTube](https://www.youtube.com/@naaku-o2x)
 
 - 🎛️ **Sandbox**: a free canvas with live traffic, animated request flow, cost and p99 latency. Components include
@@ -51,6 +51,28 @@ Open **✨ AI** in the top bar, pick a provider, paste a key, press **Test conne
 | OpenAI | API key (`sk-…`), optional model | `gpt-4o-mini` |
 | Anthropic (Claude) | API key (`sk-ant-…`), optional model | `claude-opus-5-5` |
 | Azure OpenAI | endpoint, deployment name, API version, key | your deployment |
+
+### Keep your key in a `.env` file (running locally)
+
+If you run the app on your own computer, the safest option is to keep the key out of the browser entirely:
+
+1. Copy `.env.example` to `.env` and fill in the provider(s) you use (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, or the three
+   `AZURE_OPENAI_*` values).
+2. Restart `npm start` (it prints which providers it found; the names only).
+3. Open **✨ AI**: the key is already in use. Nothing to paste, nothing stored in the browser, nothing to unlock.
+
+How it works: the local server reads `.env` and adds the key to each AI request itself (`server/ai-relay.ts`). The browser only
+learns *which* providers are configured, never the key, and the relay also strips any key a provider echoes back in an error.
+It only answers the local app (localhost `Host`, same-origin, and a custom header), so other websites can't spend your key.
+
+- `.env` is git-ignored. **Never commit it**, and never name a variable with a `VITE_` prefix: Vite copies those into the public
+  JavaScript. (The build is checked for this: no `.env` value ends up in `dist/`.)
+- This works only with `npm start` / `npm run dev`. A static host such as github.io has no server, so there visitors use the
+  encrypted in-browser option below.
+- "Remove saved key" on the AI page switches the `.env` key off (and it stays off); click **Use …** under "Keys found in your
+  .env file" to switch it back on. A key typed into the page takes priority over `.env`.
+
+### Keeping a key in the browser instead
 
 Privacy:
 

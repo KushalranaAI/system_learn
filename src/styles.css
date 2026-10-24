@@ -929,3 +929,8 @@ details.privacy summary { color: var(--text-2); }
 @media (max-width: 640px) { .pass-grid { grid-template-columns: 1fr; } }
 .unlock-card { display: flex; flex-direction: column; gap: 12px; margin-bottom: 14px; border-color: var(--accent-line); }
 .unlock-card .linkish { align-self: flex-start; color: var(--muted); }
+
+.env-card { display: flex; flex-direction: column; gap: 12px; margin-bottom: 8px; border-color: var(--accent-line); background: linear-gradient(160deg, var(--accent-soft), transparent 60%), var(--panel); }
+
+.ai-status-card + .env-card, .unlock-card + .ai-status-card { margin-top: 14px; }
+.ai-status-card { margin-bottom: 0; }
