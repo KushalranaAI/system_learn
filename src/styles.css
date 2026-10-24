@@ -759,6 +759,9 @@ details.more.card { border: 1px solid var(--line); padding: 14px 18px; margin: 1
 .ai-form { display: flex; flex-direction: column; gap: 4px; }
 .ai-form input:not([type="checkbox"]) { width: 100%; }
 .ai-form .row.gap { margin-top: 8px; }
+.warn-note { display: flex; gap: 10px; align-items: flex-start; margin: 4px 0 0; padding: 10px 12px; border-radius: var(--r-sm); background: #eab3080f; border: 1px solid #eab30840; color: var(--text-2); font-size: 0.82rem; line-height: 1.5; }
+.warn-note svg { flex: none; margin-top: 2px; color: var(--warm); }
+.warn-note b { color: var(--warm); }
 .privacy-list { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; color: var(--text-2); }
 details.privacy summary { color: var(--text-2); }
 
