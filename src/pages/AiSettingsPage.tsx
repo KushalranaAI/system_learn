@@ -1,5 +1,5 @@
-import { CircleCheck, CircleX, Lock, Sparkles } from "lucide-react";
-import { useState } from "react";
+import { CircleCheck, CircleX, Lock, Sparkles, TriangleAlert } from "lucide-react";
+import { useEffect, useState } from "react";
 import { testConnection } from "../ai/client";
 import { DEFAULT_MODELS, isConfigured, providerLabel, useAi, type AiSettings, type Provider } from "../ai/settings";
 
@@ -10,7 +10,20 @@ const PROVIDERS: { id: Provider; title: string; blurb: string }[] = [
   { id: "azure", title: "Azure OpenAI", blurb: "Your Azure OpenAI resource endpoint, deployment and key." },
 ];
 
+/** Azure OpenAI blocks direct browser calls, so it needs this app's local relay - which static hosts don't have. */
+function useRelayAvailable(): boolean {
+  const [ok, setOk] = useState(false);
+  useEffect(() => {
+    fetch("./api/ai-proxy")
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((j) => setOk(!!j.available))
+      .catch(() => setOk(false));
+  }, []);
+  return ok;
+}
+
 export function AiSettingsPage() {
+  const relay = useRelayAvailable();
   const saved = useAi((s) => s.settings);
   const enabled = useAi((s) => s.enabled);
   const { save, clear, setEnabled } = useAi.getState();
@@ -57,7 +70,7 @@ export function AiSettingsPage() {
 
       <h2 className="section-title">Provider</h2>
       <div className="provider-grid">
-        {PROVIDERS.map((p) => (
+        {PROVIDERS.filter((p) => p.id !== "azure" || relay || saved.provider === "azure").map((p) => (
           <button key={p.id} className={`provider${form.provider === p.id ? " on" : ""}`} onClick={() => choose(p.id)}>
             <b>{p.title}</b>
             <span className="small muted">{p.blurb}</span>
@@ -97,6 +110,17 @@ export function AiSettingsPage() {
           <label className="toggle">
             <input type="checkbox" checked={form.remember} onChange={(e) => set({ remember: e.target.checked })} /> Remember this key in this browser
           </label>
+          {form.remember ? (
+            <p className="warn-note">
+              <TriangleAlert size={15} />
+              <span>
+                <b>Not the safe option.</b> The key stays on this device until you clear it, and anyone who uses this browser, or any browser extension or script running on this site, could read it.
+                Never use this on a shared or public computer. Use a key with a low spending limit, and delete it from your provider if you lose the device.
+              </span>
+            </p>
+          ) : (
+            <p className="hint">Safer default: the key is kept only until you close this tab.</p>
+          )}
           <div className="row gap">
             <button className="btn" disabled={!isConfigured(form) || test.state === "running"} onClick={runTest}>
               {test.state === "running" ? "Testing…" : "Test connection"}
@@ -118,7 +142,7 @@ export function AiSettingsPage() {
         <div className="more-body">
         <ul className="small privacy-list">
           <li>It's stored only in this browser - just this tab, or this browser after restarts if you tick "Remember".</li>
-          <li>It's sent only to the provider you choose: directly from your browser to OpenAI or Anthropic, and to Azure through this app's own local server running on your computer (Azure blocks direct browser calls).</li>
+          <li>It's sent only to the provider you choose: directly from your browser to OpenAI or Anthropic{relay ? ", and to Azure through this app's own local server running on your computer (Azure blocks direct browser calls)" : ""}.</li>
           <li>It's never put in share links, scenario exports, progress files or the repository. Remove it any time with "Clear saved key".</li>
           <li>Each explanation is one API call billed to your account. Answers are cached, and the AI is only asked once you stop changing things for about a second.</li>
         </ul>

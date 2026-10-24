@@ -54,6 +54,12 @@ function aiProxy(): Plugin {
     name: "system-learn-ai-proxy",
     configureServer(server) {
       server.middlewares.use("/api/ai-proxy", (req, res) => {
+        if (req.method === "GET") {
+          // lets the AI settings page detect the relay; static hosts (GitHub Pages) don't have it
+          res.setHeader("content-type", "application/json");
+          res.end(JSON.stringify({ available: true }));
+          return;
+        }
         if (req.method !== "POST") {
           res.statusCode = 405;
           res.end();
