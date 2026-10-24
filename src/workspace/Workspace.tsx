@@ -1,6 +1,6 @@
 import { ReactFlowProvider } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { Compass, Info, SlidersHorizontal, TrendingUp } from "lucide-react";
+import { Compass, Info, Maximize2, Minimize2, SlidersHorizontal, TrendingUp } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { designContext, timelineContext } from "../ai/context";
 import { explainDesign, nodeTitle, type NodeKind } from "../engine";
@@ -11,6 +11,7 @@ import { Hud } from "./Hud";
 import { Inspector } from "./Inspector";
 import { GuidePanel } from "./GuidePanel";
 import { Palette } from "./Palette";
+import { LEFT, RIGHT, Resizer, usePanels } from "./panels";
 import { SimProvider, useSim } from "./sim";
 import { TimelinePanel } from "./TimelinePanel";
 import { TrafficPanel } from "./TrafficPanel";
@@ -95,7 +96,7 @@ function useShortcuts() {
   }, []);
 }
 
-function RightTabs({ trafficLocked }: { trafficLocked?: boolean }) {
+function RightTabs({ trafficLocked, wide, onWide }: { trafficLocked?: boolean; wide: boolean; onWide: () => void }) {
   const tab = useWorkspace((s) => s.rightTab);
   const setTab = useWorkspace((s) => s.setRightTab);
   const sim = useSim();
@@ -114,6 +115,9 @@ function RightTabs({ trafficLocked }: { trafficLocked?: boolean }) {
             {badge > 0 && <span className="tab-badge">{badge}</span>}
           </button>
         ))}
+        <button className="icon-btn sm tabs-wide" onClick={onWide} title={wide ? "Make the panel narrower" : "Make the panel wider for easier reading"} aria-label={wide ? "Narrower panel" : "Wider panel"}>
+          {wide ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+        </button>
       </div>
       <div className="tabbody">
         {tab === "guide" && <GuidePanel />}
@@ -137,16 +141,26 @@ export function Workspace({ left, palette, trafficLocked, showTimeline = true, l
   const presenter = useWorkspace((s) => s.presenter);
   // lab instructions hold the Run button, so they start open even on narrow screens (as an overlay)
   const [leftOpen, setLeftOpen] = useState(() => leftLabel === "instructions" || typeof window === "undefined" || window.innerWidth >= 1100);
+  const panels = usePanels();
   useShortcuts();
   const showLeft = !!left && leftOpen && !presenter;
+  const showRight = panels.rightOpen && !presenter;
+  const wide = panels.rightW >= 480;
   return (
     <ReactFlowProvider>
       <SimProvider>
         <WorkspaceChatSource />
-        <div className={`ws${presenter ? " presenter" : ""}${showLeft ? "" : " no-left"}`}>
+        <div
+          className={`ws${presenter ? " presenter" : ""}${showLeft ? "" : " no-left"}${showRight ? "" : " no-right"}`}
+          style={{ ["--left-w" as string]: `${panels.leftW}px`, ["--right-w" as string]: `${panels.rightW}px` }}
+        >
           {showLeft && <aside className="ws-left">{left}</aside>}
+          {showLeft && <Resizer side="left" width={panels.leftW} min={LEFT.min} max={LEFT.max} otherWidth={showRight ? panels.rightW : 0} onChange={panels.setLeftW} onReset={() => panels.setLeftW(LEFT.def)} />}
           <main className="ws-main">
-            <Hud left={left ? { open: leftOpen, toggle: () => setLeftOpen((o) => !o), label: leftLabel } : undefined} />
+            <Hud
+              left={left ? { open: leftOpen, toggle: () => setLeftOpen((o) => !o), label: leftLabel } : undefined}
+              right={{ open: panels.rightOpen, toggle: panels.toggleRight }}
+            />
             <div className="ws-stage">
               {!presenter && <Palette kinds={palette} />}
               <div className="ws-board">
@@ -157,9 +171,12 @@ export function Workspace({ left, palette, trafficLocked, showTimeline = true, l
             </div>
             {showTimeline && <TimelinePanel />}
           </main>
-          {!presenter && (
+          {showRight && (
+            <Resizer side="right" width={panels.rightW} min={RIGHT.min} max={RIGHT.max} otherWidth={showLeft ? panels.leftW : 0} onChange={panels.setRightW} onReset={() => panels.setRightW(RIGHT.def)} />
+          )}
+          {showRight && (
             <aside className="ws-right">
-              <RightTabs trafficLocked={trafficLocked} />
+              <RightTabs trafficLocked={trafficLocked} wide={wide} onWide={() => panels.setRightW(wide ? RIGHT.def : RIGHT.wide)} />
             </aside>
           )}
         </div>

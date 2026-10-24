@@ -1,4 +1,4 @@
-import { LayoutGrid, MonitorPlay, PanelLeftClose, PanelLeftOpen, Redo2, Rows3, Undo2 } from "lucide-react";
+import { LayoutGrid, MonitorPlay, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, Redo2, Rows3, Undo2 } from "lucide-react";
 import type { ReactNode } from "react";
 import { fmtRps } from "../engine";
 import { useWorkspace } from "../state/workspace";
@@ -14,7 +14,7 @@ function Metric({ label, children, tone = "", hint }: { label: string; children:
 }
 
 /** The status bar above the canvas: the live numbers, plus canvas tools. */
-export function Hud({ left }: { left?: { open: boolean; toggle: () => void; label: string } }) {
+export function Hud({ left, right }: { left?: { open: boolean; toggle: () => void; label: string }; right?: { open: boolean; toggle: () => void } }) {
   const sim = useSim();
   const playback = useWorkspace((s) => s.playback);
   const presenter = useWorkspace((s) => s.presenter);
@@ -75,6 +75,11 @@ export function Hud({ left }: { left?: { open: boolean; toggle: () => void; labe
           <span className="tool-sep" />
           <button className="icon-btn" onClick={layout} title="Tidy the layout (L)" aria-label="Tidy layout"><LayoutGrid size={17} /></button>
           <button className={`icon-btn${detailed ? " on" : ""}`} onClick={toggleDetailed} title={detailed ? "Show fewer numbers on cards" : "Show more numbers on cards"} aria-pressed={detailed} aria-label="Detailed cards"><Rows3 size={17} /></button>
+          {right && (
+            <button className={`icon-btn${right.open ? " on" : ""}`} onClick={right.toggle} title={right.open ? "Hide the guide panel" : "Show the guide panel"} aria-pressed={right.open} aria-label={right.open ? "Hide guide panel" : "Show guide panel"}>
+              {right.open ? <PanelRightClose size={17} /> : <PanelRightOpen size={17} />}
+            </button>
+          )}
           <button className="icon-btn" onClick={togglePresenter} title="Presenter mode for recording (P)" aria-label="Presenter mode"><MonitorPlay size={17} /></button>
         </div>
       )}
