@@ -1,0 +1,8 @@
+node_modules
+dist
+*.tsbuildinfo
+.DS_Store
+# machine-specific benchmark output (run `npm run bench` to create your own)
+src/state/calibration/measured.json
+bench/results/
+bench/tmp/
