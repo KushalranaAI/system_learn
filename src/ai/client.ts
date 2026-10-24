@@ -47,26 +47,33 @@ function parseJsonGuide(text: string): AiGuide {
   return parsed.data;
 }
 
-/** OpenAI and Azure OpenAI share the chat-completions shape. */
-async function chatCompletions(url: string, headers: Record<string, string>, body: object, viaProxy: boolean, signal?: AbortSignal): Promise<AiGuide> {
+/** Turn a failed provider response into a short readable error. */
+export function providerError(status: number, text: string): Error {
+  let msg = text;
+  try {
+    msg = JSON.parse(text)?.error?.message ?? text;
+  } catch {
+    /* not JSON */
+  }
+  return new Error(`${status}: ${msg.slice(0, 300)}`);
+}
+
+/** POST to an OpenAI-style chat-completions endpoint (optionally through the local relay) and return the reply text. */
+export async function postCompletion(url: string, headers: Record<string, string>, body: object, viaProxy: boolean, signal?: AbortSignal): Promise<string> {
   const init: RequestInit = viaProxy
     ? { method: "POST", signal, headers: { "content-type": "application/json" }, body: JSON.stringify({ url, headers, body }) }
     : { method: "POST", signal, headers: { "content-type": "application/json", ...headers }, body: JSON.stringify(body) };
   const res = await fetch(viaProxy ? "./api/ai-proxy" : url, init);
   const text = await res.text();
-  if (!res.ok) {
-    let msg = text;
-    try {
-      msg = JSON.parse(text)?.error?.message ?? text;
-    } catch {
-      /* not JSON */
-    }
-    throw new Error(`${res.status}: ${msg.slice(0, 300)}`);
-  }
-  const json = JSON.parse(text);
-  const content = json?.choices?.[0]?.message?.content;
+  if (!res.ok) throw providerError(res.status, text);
+  const content = JSON.parse(text)?.choices?.[0]?.message?.content;
   if (!content) throw new Error("The AI returned an empty answer.");
-  return parseJsonGuide(content);
+  return content;
+}
+
+/** OpenAI and Azure OpenAI share the chat-completions shape. */
+async function chatCompletions(url: string, headers: Record<string, string>, body: object, viaProxy: boolean, signal?: AbortSignal): Promise<AiGuide> {
+  return parseJsonGuide(await postCompletion(url, headers, body, viaProxy, signal));
 }
 
 /**

@@ -10,6 +10,7 @@ import { labBySlug, type Lab, type LabStep } from "../labs";
 import type { ApiExpectation } from "../labs/types";
 import { loadProgress, updateProgress, type ApiRow } from "../progress";
 import { useWorkspace } from "../state/workspace";
+import { useChatSource } from "../chat/store";
 import { Markdown } from "../ui/Markdown";
 import { Workspace } from "../workspace/Workspace";
 import { simById } from "../sims";
@@ -33,6 +34,28 @@ export function LabPlayer() {
   useEffect(() => {
     updateProgress((p) => (p.labs[slug] = { ...labState(slug), ...p.labs[slug], step: stepIdx, done }));
   }, [slug, stepIdx, done]);
+
+  const cur = lab?.steps[stepIdx];
+  useChatSource(
+    "lab",
+    lab && cur
+      ? {
+          label: `Lab · ${lab.title} · step ${stepIdx + 1} of ${lab.steps.length}`,
+          suggestions: cur.type === "quiz" ? ["Help me reason about this question without giving the answer"] : cur.type === "design" ? ["Give me a hint for this step", "What is this step asking me to build?"] : ["What is this step asking me to do?"],
+          build: () => ({
+            lab: lab.title,
+            product: lab.product,
+            summary: lab.summary,
+            step: { number: stepIdx + 1, of: lab.steps.length, type: cur.type, title: cur.title },
+            stepsCompleted: done.map((i) => lab.steps[i]?.title),
+            brief: "body" in cur ? cur.body : undefined,
+            ...(cur.type === "quiz" ? { question: cur.question, options: cur.options.map((o) => o.text), note: "The correct answer is deliberately not provided. Guide the learner's reasoning." } : {}),
+            ...(cur.type === "api" ? { requirements: cur.expect.map((e) => e.goal) } : {}),
+            ...(cur.type === "sim" ? { simulation: cur.sim, goals: cur.goals.map((g) => g.label) } : {}),
+          }),
+        }
+      : null,
+  );
 
   if (!lab)
     return (
@@ -112,6 +135,10 @@ export function LabPlayer() {
 function QuizView({ step, onPass, onNext }: { step: Extract<LabStep, { type: "quiz" }>; onPass: () => void; onNext: () => void }) {
   const [picked, setPicked] = useState<number | null>(null);
   const right = picked !== null && step.options[picked].correct;
+  useChatSource("quiz-answer", {
+    label: picked === null ? "The quiz question" : "Your quiz answer",
+    build: () => (picked === null ? "The learner has not answered yet." : { picked: step.options[picked].text, wasCorrect: right }),
+  });
   return (
     <>
       <Markdown>{step.body}</Markdown>
@@ -166,6 +193,11 @@ function ApiView({ slug, step, onPass, onNext }: { slug: string; step: Extract<L
   useEffect(() => updateProgress((p) => (p.labs[slug] = { ...(p.labs[slug] ?? { step: 0, done: [] }), api: rows })), [slug, rows]);
   const set = (i: number, patch: Partial<ApiRow>) => setRows((rs) => rs.map((r, j) => (j === i ? { ...r, ...patch } : r)));
   const pass = results?.every((r) => r.ok);
+  useChatSource("api-draft", {
+    label: "Your API draft",
+    suggestions: ["Review my API design", "Is my REST design idiomatic?"],
+    build: () => ({ endpoints: rows.map((r) => `${r.method} ${step.baseUrl}${r.path} -> ${r.status}`), lastCheck: results?.map((r) => `${r.ok ? "met" : "NOT met"}: ${r.goal}`) ?? "not checked yet" }),
+  });
   return (
     <>
       <Markdown>{step.body}</Markdown>
@@ -295,7 +327,6 @@ function DesignStepView({
   const ai = useAiExplanation(
     "The learner ran a lab test on their design. If it failed, explain exactly why each failed check failed and what to change on the canvas; if it passed, explain why the design works and the trade-offs it makes.",
     aiCtx,
-    { debounceMs: 0 },
   );
   const run = () => {
     const ws = useWorkspace.getState();
@@ -323,6 +354,19 @@ function DesignStepView({
     }
     if (rep.pass) onPass();
   };
+
+  useChatSource("lab-test", {
+    label: report ? (report.pass ? "Test result · passed" : "Test result · not passed") : "The lab test",
+    suggestions: report && !report.pass ? ["Why did my test fail?", "What should I change first?"] : ["How should I approach this step?"],
+    build: () => ({
+      traffic: step.test.traffic,
+      incident: incidentText,
+      mustSatisfy: step.test.constraints.map(describe),
+      lastRun: report ? { passed: report.pass, checks: report.lines.map((l) => `${l.ok ? "met" : "NOT met"}: ${l.label} (${l.detail})`) } : "not run yet",
+      hintsTheLearnerHasSeen: step.hints.slice(0, hints),
+      note: "A reference solution exists but is deliberately not provided. Guide the learner with reasoning and hints.",
+    }),
+  });
 
   const t = step.test.traffic;
   const aiShown = ai.status === "done" || (!!ai.data && ai.status !== "error");

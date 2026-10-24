@@ -6,6 +6,7 @@ import type { Graph, Incident, Resilience, Traffic } from "../engine";
 import { PRESETS } from "../presets";
 import { loadProgress, updateProgress, type Scenario } from "../progress";
 import { MEASURED, savedProfileId } from "../state/profile";
+import { useChatSource } from "../chat/store";
 import { useWorkspace } from "../state/workspace";
 import { Workspace } from "../workspace/Workspace";
 
@@ -68,6 +69,11 @@ export function Sandbox() {
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.get("preset"), params.get("d")]);
+
+  useChatSource("sandbox", {
+    label: current ? `Sandbox · ${current.title}` : "Sandbox",
+    build: () => ({ scenario: current ? { title: current.title, about: current.blurb, suggestedExercises: current.tryThis } : "a free canvas", savedScenarios: scenarios.map((s) => s.name) }),
+  });
 
   const snapshot = (): Shared => {
     const { graph, traffic, incident, resilience } = useWorkspace.getState();

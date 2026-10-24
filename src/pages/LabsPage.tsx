@@ -2,6 +2,7 @@ import { ArrowRight, Check, Clock, Layers } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { LABS, UPCOMING } from "../labs";
+import { useChatSource } from "../chat/store";
 import { loadProgress } from "../progress";
 
 const FILTERS = ["all", "easy", "medium", "hard"] as const;
@@ -9,6 +10,14 @@ const FILTERS = ["all", "easy", "medium", "hard"] as const;
 export function LabsPage() {
   const progress = loadProgress();
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>("all");
+  useChatSource("labs", {
+    label: `Labs · ${LABS.length} to choose from`,
+    suggestions: ["Which lab should I start with?", "What will I learn in the easy labs?", "How do labs get checked?"],
+    build: () => ({
+      filter,
+      labs: LABS.map((l) => ({ title: l.title, product: l.product, difficulty: l.difficulty, steps: l.steps.length, minutes: l.minutes, summary: l.summary, tags: l.tags, stepsCompleted: progress.labs[l.slug]?.done.length ?? 0 })),
+    }),
+  });
   const shown = LABS.filter((l) => filter === "all" || l.difficulty === filter);
   const finished = LABS.filter((l) => progress.labs[l.slug]?.done.length === l.steps.length).length;
   return (

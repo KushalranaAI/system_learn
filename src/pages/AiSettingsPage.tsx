@@ -52,7 +52,7 @@ export function AiSettingsPage() {
       <header className="page-head">
         <p className="eyebrow">AI explanations</p>
         <h1>Let an AI explain your simulations.</h1>
-        <p className="lead">The built-in explanations work offline. Add your own key and the AI writes explanations from your exact design and its numbers.</p>
+        <p className="lead">The built-in explanations work offline. Add your own key to get "Explain with AI" buttons and a chat assistant that sees what is on your screen.</p>
       </header>
 
       <div className={`ai-status-card${active ? " on" : ""}`}>
@@ -144,7 +144,7 @@ export function AiSettingsPage() {
           <li>It's stored only in this browser - just this tab, or this browser after restarts if you tick "Remember".</li>
           <li>It's sent only to the provider you choose: directly from your browser to OpenAI or Anthropic{relay ? ", and to Azure through this app's own local server running on your computer (Azure blocks direct browser calls)" : ""}.</li>
           <li>It's never put in share links, scenario exports, progress files or the repository. Remove it any time with "Clear saved key".</li>
-          <li>Each explanation is one API call billed to your account. Answers are cached, and the AI is only asked once you stop changing things for about a second.</li>
+          <li>Each explanation is one API call billed to your account. Nothing is sent until you click "Explain with AI" or send a chat message. Answers to unchanged designs are cached.</li>
         </ul>
         </div>
       </details>

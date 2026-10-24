@@ -1,8 +1,10 @@
 import { ReactFlowProvider } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { Compass, Info, SlidersHorizontal, TrendingUp } from "lucide-react";
-import { useEffect, useState, type ReactNode } from "react";
-import type { NodeKind } from "../engine";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { designContext, timelineContext } from "../ai/context";
+import { explainDesign, nodeTitle, type NodeKind } from "../engine";
+import { useChatSource } from "../chat/store";
 import { useWorkspace } from "../state/workspace";
 import { Board } from "./Board";
 import { Hud } from "./Hud";
@@ -27,6 +29,48 @@ function Toast() {
       <Info size={16} /> <span>{toast.text}</span>
     </div>
   ) : null;
+}
+
+/** Tells the chat what is on the canvas: the design, traffic, incident and live results. Read only when a question is sent. */
+function WorkspaceChatSource() {
+  const sim = useSim();
+  const nodeCount = useWorkspace((s) => s.graph.nodes.length);
+  const selectedName = useWorkspace((s) => {
+    const n = s.graph.nodes.find((x) => x.id === s.selected);
+    return n ? nodeTitle(n, s.graph.nodes) : null;
+  });
+  const simRef = useRef(sim);
+  simRef.current = sim;
+  useChatSource("canvas", {
+    label: nodeCount > 1 ? `Your design · ${nodeCount} components` : "An empty canvas",
+    suggestions:
+      nodeCount > 1
+        ? [
+            "Why is my design failing, or what breaks first?",
+            "What happens if traffic doubles?",
+            ...(selectedName ? [`Explain the ${selectedName} I selected`] : ["How could I cut the cost?"]),
+            "Explain this design like I'm new to system design",
+          ]
+        : ["How do I start building a system?", "What does a load balancer do?", "Which components should I add first?"],
+    build: () => {
+      const s = useWorkspace.getState();
+      if (s.graph.nodes.length === 0) return { note: "The canvas is empty." };
+      const res = simRef.current;
+      const guide = explainDesign(s.graph, s.traffic, res, s.resilience);
+      const base = designContext(s.graph, s.traffic, res, s.resilience, guide);
+      const sel = s.graph.nodes.find((n) => n.id === s.selected);
+      const ctx = s.playback.ticks ? timelineContext(base, s.playback.ticks, s.incident, []) : base;
+      return {
+        ...ctx,
+        selectedComponent: sel ? nodeTitle(sel, s.graph.nodes) : null,
+        takenDown: s.down,
+        timelinePlayback: s.playback.ticks ? { atSecond: s.playback.index, of: s.playback.ticks.length - 1, playing: s.playback.playing } : null,
+        capacityProfile: s.profileId === "measured" ? "measured on the learner's own machine" : "reference teaching numbers",
+        selectedIncident: s.incident,
+      };
+    },
+  });
+  return null;
 }
 
 function useShortcuts() {
@@ -98,6 +142,7 @@ export function Workspace({ left, palette, trafficLocked, showTimeline = true, l
   return (
     <ReactFlowProvider>
       <SimProvider>
+        <WorkspaceChatSource />
         <div className={`ws${presenter ? " presenter" : ""}${showLeft ? "" : " no-left"}`}>
           {showLeft && <aside className="ws-left">{left}</aside>}
           <main className="ws-main">

@@ -2,6 +2,7 @@ import { CircleCheck, CircleX, Cpu, Play, Terminal, Timer } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { REFERENCE_PROFILE, fmtRps } from "../engine";
+import { useChatSource } from "../chat/store";
 import { MEASURED } from "../state/profile";
 
 type Status = "idle" | "running" | "done" | "error" | "unavailable";
@@ -52,6 +53,21 @@ export function MachinePage() {
   };
 
   const m = MEASURED;
+  useChatSource("machine", {
+    label: m ? `Your machine · ${m.machine.cpu}` : "Your machine · not measured",
+    suggestions: ["What do these numbers mean?", "Why is my machine so much faster than the reference?", "How are the capacities calculated?"],
+    build: () => ({
+      measured: !!m,
+      machine: m?.machine,
+      measuredAt: m?.measuredAt,
+      referenceServers: REFERENCE_PROFILE.serverSizes.map((s) => `${s.label}: ${s.cap} req/s`),
+      measuredServers: m?.serverSizes.map((s) => `${s.label}: ${s.cap} req/s`),
+      referenceDatabases: REFERENCE_PROFILE.dbSizes.map((s) => `${s.label}: ${s.readCap} reads/s, ${s.writeCap} writes/s`),
+      measuredDatabases: m?.dbSizes.map((s) => `${s.label}: ${s.readCap} reads/s, ${s.writeCap} writes/s`),
+      method: m?.method,
+      runStatus: status,
+    }),
+  });
   const ratio = (mine: number, ref: number) => {
     const r = mine / ref;
     return <span className={`ratio ${r >= 1 ? "up" : "down"}`}>{r >= 10 ? Math.round(r) : r.toFixed(1)}×</span>;
