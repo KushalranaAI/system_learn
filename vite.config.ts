@@ -1,0 +1,94 @@
+import { spawn } from "node:child_process";
+import path from "node:path";
+import { defineConfig, type Plugin } from "vite";
+import react from "@vitejs/plugin-react";
+
+/**
+ * Dev-only endpoint: POST /api/bench runs `node bench/run.mjs` on this machine and streams its output.
+ * The benchmark writes src/state/calibration/measured.json, which the app picks up automatically.
+ */
+function benchApi(): Plugin {
+  let running = false;
+  return {
+    name: "system-learn-bench-api",
+    configureServer(server) {
+      server.middlewares.use("/api/bench", (req, res) => {
+        if (req.method === "GET") {
+          res.setHeader("content-type", "application/json");
+          res.end(JSON.stringify({ available: true, running }));
+          return;
+        }
+        if (req.method !== "POST") {
+          res.statusCode = 405;
+          res.end();
+          return;
+        }
+        if (running) {
+          res.statusCode = 409;
+          res.end("A benchmark is already running.");
+          return;
+        }
+        running = true;
+        const quick = (req.url ?? "").includes("quick");
+        res.writeHead(200, { "content-type": "text/plain; charset=utf-8", "cache-control": "no-cache", "x-accel-buffering": "no" });
+        const child = spawn(process.execPath, [path.join(server.config.root, "bench", "run.mjs"), ...(quick ? ["--quick"] : [])], { cwd: server.config.root });
+        child.stdout.on("data", (d) => res.write(d));
+        child.stderr.on("data", (d) => res.write(d));
+        child.on("close", (code) => {
+          running = false;
+          res.end(`\nEXIT ${code}\n`);
+        });
+      });
+    },
+  };
+}
+
+/**
+ * Dev-only relay for AI calls the browser can't make directly (CORS - mainly Azure OpenAI).
+ * It forwards only to known AI provider hosts, never stores or logs the key, and runs on your own machine.
+ */
+function aiProxy(): Plugin {
+  const allowed = (host: string) =>
+    host === "api.openai.com" || host === "api.anthropic.com" || /\.openai\.azure\.com$/.test(host) || /\.cognitiveservices\.azure\.com$/.test(host) || /\.services\.ai\.azure\.com$/.test(host);
+  return {
+    name: "system-learn-ai-proxy",
+    configureServer(server) {
+      server.middlewares.use("/api/ai-proxy", (req, res) => {
+        if (req.method !== "POST") {
+          res.statusCode = 405;
+          res.end();
+          return;
+        }
+        let raw = "";
+        req.on("data", (c) => (raw += c));
+        req.on("end", async () => {
+          try {
+            const { url, headers, body } = JSON.parse(raw);
+            const target = new URL(url);
+            if (target.protocol !== "https:" || !allowed(target.hostname)) {
+              res.statusCode = 400;
+              res.end(JSON.stringify({ error: { message: `Refusing to relay to ${target.hostname} - only AI provider hosts are allowed.` } }));
+              return;
+            }
+            const upstream = await fetch(target, { method: "POST", headers: { "content-type": "application/json", ...headers }, body: JSON.stringify(body) });
+            res.statusCode = upstream.status;
+            res.setHeader("content-type", "application/json");
+            res.end(await upstream.text());
+          } catch (e) {
+            res.statusCode = 502;
+            res.end(JSON.stringify({ error: { message: String(e) } }));
+          }
+        });
+      });
+    },
+  };
+}
+
+// `base: "./"` keeps the build portable (GitHub Pages, any static host, or a local folder).
+export default defineConfig({
+  base: "./",
+  plugins: [react(), benchApi(), aiProxy()],
+  server: { port: 5173 },
+  build: { chunkSizeWarningLimit: 2000 },
+  test: { environment: "node", include: ["src/**/*.test.ts"] },
+} as never);
