@@ -2,6 +2,7 @@ import { CircleCheck, CircleX, Lightbulb, RotateCcw, Scale, TriangleAlert } from
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { AiGuideCard } from "../ai/AiGuideCard";
 import { simContext } from "../ai/context";
+import { useChatSource } from "../chat/store";
 import { useAiExplanation } from "../ai/useAiExplanation";
 import { EXPLAIN } from "./explain";
 import { goalMet, type Goal, type ParamSpec, type Params, type SimDef } from "./types";
@@ -249,6 +250,22 @@ export function SimRunner({
     onMetrics?.(metrics, params);
   }, [metrics, params, onMetrics]);
   const set = (k: string, v: number | string | boolean) => setParams((p) => ({ ...p, [k]: v }));
+  useChatSource(`simulation:${def.id}`, {
+    label: `Simulation · ${def.title}`,
+    suggestions: ["What is this simulation showing me?", "What should I change to improve the result?", "Why does the result change when I move these sliders?"],
+    build: () => {
+      const e = EXPLAIN[def.id]?.(params, metrics);
+      return simContext(
+        def.title,
+        def.blurb,
+        params,
+        metrics,
+        Object.fromEntries(def.metricSpecs.map((m) => [m.key, m.label])),
+        { scenario: e?.scenario ?? "", outcome: e?.outcome ?? "" },
+        goals?.map((g) => ({ label: g.label, met: goalMet(g, metrics) })),
+      );
+    },
+  });
   return (
     <div className={`simrunner${compact ? " compact" : ""}`}>
       <aside className="sim-controls">

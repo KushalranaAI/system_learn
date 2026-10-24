@@ -2,6 +2,7 @@ import { ArrowLeft, ArrowRight, BookOpen, Check, ChevronLeft, Clock, FlaskConica
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { LESSONS, lessonById, outline } from "../content/lessons";
+import { useChatSource } from "../chat/store";
 import { loadProgress, updateProgress } from "../progress";
 import { Markdown } from "../ui/Markdown";
 import { simsForLesson } from "../sims";
@@ -16,6 +17,23 @@ function LessonView({ id }: { id: string }) {
   const lesson = lessonById(id);
   const [done, setDone] = useState(() => !!loadProgress().lessons[id]);
   const [read, setRead] = useState(0);
+  useChatSource(
+    "lesson",
+    lesson
+      ? {
+          label: `Lesson ${lesson.lesson} · ${lesson.title}`,
+          suggestions: ["Summarize this lesson in 3 bullets", "Explain the hardest idea here with an example", "Quiz me on this lesson"],
+          build: () => ({
+            lesson: lesson.lesson,
+            title: lesson.title,
+            type: lesson.type,
+            minutes: lesson.minutes,
+            completedByLearner: done,
+            text: lesson.body.slice(0, 14000),
+          }),
+        }
+      : null,
+  );
   if (!lesson)
     return (
       <div className="page narrow">

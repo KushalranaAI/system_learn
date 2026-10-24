@@ -24,16 +24,22 @@ canvas, push traffic through them, break things on purpose, and watch what happe
 - 🖥️ **My machine**: `npm run bench` (or the in-app button) starts real servers on your computer (a JSON API, a SQLite
   database server, a TCP cache), drives real load at them, measures CPU-bound jobs and fsync, and turns the results
   into the simulator's capacity numbers.
-- ✨ **Optional AI explanations**: paste your own OpenAI, Anthropic (Claude) or Azure OpenAI key on the **✨ AI** page
-  and the Guide, lab coach and simulation explanations are written by the AI from the actual simulation numbers.
-  Without a key, everything uses the built-in explanations.
+- ✨ **Optional AI**: paste your own OpenAI, Anthropic (Claude) or Azure OpenAI key on the **✨ AI** page. Then every
+  built-in explanation gets an **Explain with AI** button (it never runs on its own), and a chat button at the bottom
+  right opens a tutor that can see whatever screen you are on. Without a key, everything uses the built-in explanations.
 - 🎬 **Presenter mode** (press `P`) for recording videos. The simulation is deterministic, so every take matches.
 
 Runs entirely in your browser. No account, no backend, and progress stays in localStorage.
 
-## AI explanations (optional)
+## AI explanations and chat (optional)
 
 Open **✨ AI** in the top bar, pick a provider, paste a key, press **Test connection**, then **Save and use AI**.
+
+- **Explain with AI** appears above the built-in explanation in the Guide, labs and simulations. Nothing is sent until you click it.
+- **Ask the tutor** (the round button at the bottom right) answers free-form questions. Each screen tells it what you are
+  looking at: your design, traffic and results in the sandbox; settings and metrics in a simulation; the text of a lesson;
+  the brief and your last test in a lab (never the reference solution or quiz answers). Screens register this with
+  `useChatSource` in `src/chat/store.ts`, so a new page only needs one call to be understood by the tutor.
 
 | Provider | What you enter | Default model |
 |---|---|---|
@@ -83,7 +89,8 @@ Requires Node.js 20+.
 ```
 src/
   engine/      pure TypeScript simulator (no React): capacity profiles, solver, timeline, wiring rules, lab checks
-  ai/          optional AI explanations: provider settings, API clients, context builders
+  ai/          optional AI: provider settings, API clients (explain + chat), context builders
+  chat/        the floating tutor and the per-screen context registry
   sims/        the 21 algorithm/system simulations (engine + view each) and shared charts/controls
   state/       zustand store for the canvas (undo/redo, playback) + auto layout
   workspace/   canvas UI: React Flow board, node cards, animated edges, inspector, traffic, timeline

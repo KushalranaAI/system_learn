@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { LESSONS, lessonById, outline } from "../content/lessons";
 import { LABS } from "../labs";
+import { useChatSource } from "../chat/store";
 import { loadProgress } from "../progress";
 import { lessonsDone, nextLesson } from "../ui/resume";
 
@@ -24,6 +25,22 @@ export function PathPage() {
   const total = LESSONS.length;
   const doneCount = lessonsDone(progress);
   const [open, setOpen] = useState<number | null>(next?.module ?? 1);
+  useChatSource("path", {
+    label: `The path · ${doneCount} of ${total} lessons done`,
+    suggestions: ["Where should I start?", "What should I learn next, and why?", "Explain how the modules fit together"],
+    build: () => ({
+      lessonsCompleted: doneCount,
+      lessonsWritten: total,
+      nextLesson: next ? `${next.lesson} ${next.title}` : null,
+      modules: modules.map((m) => ({
+        module: m.number,
+        title: m.title,
+        part: m.part,
+        completed: m.lessons.filter((l) => progress.lessons[l.id]).length,
+        lessons: m.lessons.map((l) => `${l.id} ${l.title}${progress.lessons[l.id] ? " (done)" : ""} - ${l.learn}`),
+      })),
+    }),
+  });
   let part = "";
   return (
     <div className="page narrow">
