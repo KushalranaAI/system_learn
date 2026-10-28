@@ -89,7 +89,7 @@ results vary between runs. The raw numbers, the fitted α and the method are sto
 
 ## Simulations (`src/sims/`)
 
-Beyond the canvas, 21 focused simulations implement the algorithms for real (seeded RNG, so runs are reproducible):
+Beyond the canvas, 37 focused simulations implement the algorithms for real (seeded RNG, so runs are reproducible):
 
 | Simulation | Model |
 |------------|-------|
@@ -109,6 +109,16 @@ Beyond the canvas, 21 focused simulations implement the algorithms for real (see
 | `snowflake` | Per-ms ID generation, sequence exhaustion, random worker-id collisions, clock rollback |
 | `wal` | fsync per commit vs group commit vs async; uses your measured fsync time if available |
 | `cache-stampede` | 100 ms ticks; synchronized TTL expiry, jitter, coalescing, stale-while-revalidate, cold restart |
+| `payload-formats` | Real records encoded byte for byte as JSON, short-key JSON, MessagePack and Protobuf (varints, tags, zigzag) |
+| `fetch-patterns` | Round trips, bytes and DB queries for one screen: chatty REST, `?include=`, GraphQL with/without DataLoader, a BFF |
+| `pagination` | A live newest-first feed in a Fenwick tree; offset vs cursor paging with inserts and deletes; rows walked per page |
+| `idempotent-retries` | 20k payments over lossy request/response legs; no key, key per attempt, key per intent, TTL and atomic save |
+| `token-lifetime` | Refresh and introspection load vs revocation lag (5k sampled revocations) for JWT, JWT + denylist, opaque tokens |
+| `debounce` | 600 typing sessions with lognormal keystroke gaps; every-key / debounce / throttle, out-of-order replies |
+| `latency-budget` | RTT from distance, handshake round trips per protocol, edge termination, TCP slow start, server work |
+| `chunked-upload` | 400 uploads over a link with Poisson connection drops; single PUT vs resumable chunks with parallelism |
+
+The last eight belong to Part 3 (API design); their explanations live in `sims/api-explain.ts`.
 
 Each simulation exports `run(params)`, `metrics(result)` and a view. Lab steps of type `sim` declare goals over the
 metrics; `src/labs/labs.test.ts` checks each step's solution meets them and the starting parameters don't.

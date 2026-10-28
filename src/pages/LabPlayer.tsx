@@ -7,7 +7,7 @@ import { AiGuideCard } from "../ai/AiGuideCard";
 import { designContext, labContext } from "../ai/context";
 import { useAiExplanation } from "../ai/useAiExplanation";
 import { labBySlug, type Lab, type LabStep } from "../labs";
-import type { ApiExpectation } from "../labs/types";
+import { checkApi } from "../labs/api-check";
 import { loadProgress, updateProgress, type ApiRow } from "../progress";
 import { useWorkspace } from "../state/workspace";
 import { useChatSource } from "../chat/store";
@@ -174,16 +174,7 @@ function QuizView({ step, onPass, onNext }: { step: Extract<LabStep, { type: "qu
 }
 
 const METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE"];
-const STATUSES = [200, 201, 202, 204, 301, 302, 307, 308, 400, 404];
-
-function checkApi(rows: ApiRow[], expect: ApiExpectation[]) {
-  return expect.map((x) => {
-    const match = rows.find(
-      (r) => x.methods.includes(r.method) && x.statuses.includes(r.status) && (!x.needsParam || /\/:[a-zA-Z_]+|\{[a-zA-Z_]+\}/.test(r.path)),
-    );
-    return { goal: x.goal, ok: !!match, why: x.why };
-  });
-}
+const STATUSES = [200, 201, 202, 204, 301, 302, 304, 307, 308, 400, 401, 403, 404, 409, 422, 429];
 
 function ApiView({ slug, step, onPass, onNext }: { slug: string; step: Extract<LabStep, { type: "api" }>; onPass: () => void; onNext: () => void }) {
   const [rows, setRows] = useState<ApiRow[]>(

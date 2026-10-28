@@ -37,8 +37,8 @@ export function runBloom(p: BloomP): BloomR {
 export const bloom: SimDef<BloomP, BloomR> = {
   id: "bloom",
   title: "Bloom filter",
-  module: 19,
-  lessons: ["19.2"],
+  module: 26,
+  lessons: ["26.2"],
   blurb: "Insert real items into a bit array with k hash functions, then test 20,000 items that were never inserted and count the false positives.",
   params: [
     { key: "n", label: "Items inserted", type: "number", min: 1000, max: 200000, log: true },
@@ -100,8 +100,8 @@ export function runHll(p: HllP): HllR {
 export const hyperloglog: SimDef<HllP, HllR> = {
   id: "hyperloglog",
   title: "HyperLogLog",
-  module: 19,
-  lessons: ["19.4", "12.8", "17.6"],
+  module: 26,
+  lessons: ["26.4", "12.8", "17.6"],
   blurb: "Count distinct users in a stream with duplicates using 2^p tiny registers, and compare with the exact answer.",
   params: [
     { key: "p", label: "Precision p (2^p registers)", type: "number", min: 4, max: 16 },
@@ -155,8 +155,8 @@ export function runCms(p: CmsP): CmsR {
 export const countMin: SimDef<CmsP, CmsR> = {
   id: "count-min",
   title: "Count-min sketch",
-  module: 19,
-  lessons: ["19.3", "14.3"],
+  module: 26,
+  lessons: ["26.3", "14.3"],
   blurb: "Estimate how often each key appears in a 200,000-event skewed stream with a small grid of counters, and find the heavy hitters.",
   params: [
     { key: "width", label: "Width (counters per row)", type: "number", min: 16, max: 16384, log: true },
@@ -228,8 +228,8 @@ export function runMerkle(p: MerkleP): MerkleR {
 export const merkle: SimDef<MerkleP, MerkleR> = {
   id: "merkle",
   title: "Merkle tree repair",
-  module: 19,
-  lessons: ["19.5", "13.5"],
+  module: 26,
+  lessons: ["26.5", "13.5"],
   blurb: "Two replicas of 100,000 keys differ in a few of them. Build real Merkle trees, walk only the mismatched branches, and count the hashes compared and keys sent.",
   params: [
     { key: "keys", label: "Keys per replica", type: "number", min: 1000, max: 500000, log: true },
@@ -296,8 +296,8 @@ export function runTokenBucket(p: TbP): TbR {
 export const tokenBucket: SimDef<TbP, TbR> = {
   id: "token-bucket",
   title: "Token bucket rate limiter",
-  module: 19,
-  lessons: ["19.10", "8.2", "8.3"],
+  module: 26,
+  lessons: ["26.10", "8.2", "8.3"],
   blurb: "A real app sends bursts of 20 requests every 10 s plus 1 per second; an abusive client sends 30 per second. Tune capacity and refill so the app always gets through and the abuser doesn't.",
   params: [
     { key: "capacity", label: "Bucket capacity (burst)", type: "number", min: 1, max: 60 },
@@ -377,8 +377,8 @@ export function runSkipList(p: SlP): SlR {
 export const skipList: SimDef<SlP, SlR> = {
   id: "skip-list",
   title: "Skip list",
-  module: 19,
-  lessons: ["19.12"],
+  module: 26,
+  lessons: ["26.12"],
   blurb: "Build a real skip list with coin-flip levels and measure how many steps a search takes as the list grows - the structure behind Redis sorted sets.",
   params: [
     { key: "n", label: "Elements", type: "number", min: 100, max: 500000, log: true },

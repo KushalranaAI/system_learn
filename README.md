@@ -17,15 +17,21 @@ Built by **[Kushal Rana](https://kushalranaai.github.io/)** ·
 - 💥 **Incidents**: kill a server or database, flush the cache, or spike traffic, then watch a 60-second timeline with
   retries, failover and cache warm-up.
 - 🧪 **Labs**: step-by-step challenges checked by the simulator (success rate, p99, budget, recovery time).
-- 📚 **Path**: 4 parts, 30 modules and 228 lessons, from "what is system design?" to replication, Kafka, multi-region,
-  networking and database internals, real-world architectures (Netflix, Hotstar, Discord, Uber, Stripe...), 13 famous
-  outages told from their postmortems (Cloudflare, CrowdStrike, AWS, Facebook...), 16 classic interview problems, and
-  **Part 4 – AI system design**: LLM serving, RAG, agents and MCP, evals, guardrails, prompt injection and AI case studies.
-- 🧪 **29 interactive labs**: simulator design challenges plus decision steps, including chat delivery, ticket booking,
-  ranked feeds, video, presence, payments, ride dispatch, LLM serving, RAG and a support agent.
-- 🗺️ **48 sandbox starting points** in five groups: basics, interview classics, how the big ones scale, famous outages
-  (press Run to replay the failure) and AI systems. The canvas has LLM, vector database and agent components.
-- 🔬 **29 simulations** that run real models in your browser, including LLM batching, KV-cache memory, semantic caches,
+- 📚 **Path**: 5 parts, 37 modules and 288 lessons, from "what is system design?" to replication, Kafka, multi-region,
+  **Part 3 – API design** (HTTP, data formats, REST vs GraphQL vs gRPC, API security with OAuth and the OWASP API
+  Top 10, versioning, idempotency, webhooks, caching, response-time estimation, and 15 API design problems from search
+  and file uploads to payments, maps, video calls and games), networking and database internals, real-world
+  architectures (Netflix, Hotstar, Discord, Uber, Stripe...), 13 famous outages told from their postmortems (Cloudflare,
+  CrowdStrike, AWS, Facebook...), 16 classic interview problems, and **Part 5 – AI system design**: LLM serving, RAG,
+  agents and MCP, evals, guardrails, prompt injection and AI case studies.
+- 🧪 **38 interactive labs**: simulator design challenges plus decision steps, including chat delivery, ticket booking,
+  ranked feeds, video, presence, payments, ride dispatch, nine API design labs (endpoints checked step by step), LLM
+  serving, RAG and a support agent.
+- 🗺️ **58 sandbox starting points** in six groups: basics, interview classics, API design, how the big ones scale, famous
+  outages (press Run to replay the failure) and AI systems. The canvas has LLM, vector database and agent components.
+- 🔬 **37 simulations** that run real models in your browser, including payload formats (real JSON, MessagePack and
+  Protobuf encoders), REST vs GraphQL vs BFF round trips, offset vs cursor pagination, idempotent retries, token
+  lifetimes, debounced search, latency budgets and resumable uploads, LLM batching, KV-cache memory, semantic caches,
   model cascades, RAG retrieval, HNSW recall, agent reliability and staged rollouts, plus call chains (Monte Carlo), retry storms, quorums,
   consistent hashing, Kafka consumer lag, sagas under failure, event-time windows, and working Bloom filters,
   HyperLogLog, count-min sketches, Merkle trees, gossip, Raft elections, token buckets, skip lists, LSM vs B-trees,

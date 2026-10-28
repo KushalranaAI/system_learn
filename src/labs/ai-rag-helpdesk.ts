@@ -25,7 +25,7 @@ const rag = (opts: { vectors?: number; ingest?: number }) =>
 
 export const aiRagHelpdesk: Lab = {
   slug: "ai-rag-helpdesk",
-  module: 27,
+  module: 34,
   title: "A RAG help centre",
   product: "Customer support",
   summary: "Answer customers from 20,000 help articles. Chunk and retrieve well enough that the answer is actually in the prompt, pick a vector index, and keep embeddings fresh without slowing down answers.",

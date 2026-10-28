@@ -108,8 +108,8 @@ export function runAgentReliability(p: AgentP): AgentR {
 export const agentReliability: SimDef<AgentP, AgentR> = {
   id: "agent-reliability",
   title: "Agent reliability math",
-  module: 28,
-  lessons: ["28.8", "28.2"],
+  module: 35,
+  lessons: ["35.8", "35.2"],
   blurb: "A task needs every step to go right, so per-step errors compound: 95% per step over 10 steps is 60% per task. Add verification, retries and a step limit and watch success, cost and the long tail of runaway runs.",
   params: [
     { key: "steps", label: "Steps a task needs", type: "number", min: 1, max: 30 },

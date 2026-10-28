@@ -89,8 +89,8 @@ export function runGeo(p: GeoP): GeoR {
 export const geohashSim: SimDef<GeoP, GeoR> = {
   id: "geohash",
   title: "Geohash: find drivers nearby",
-  module: 19,
-  lessons: ["19.9"],
+  module: 26,
+  lessons: ["26.9"],
   blurb: "Thousands of drivers across a city. Find everyone within a radius of 200 random riders - by scanning all drivers, by geohash cell, or by cell plus its 8 neighbours - and measure accuracy vs work.",
   params: [
     { key: "drivers", label: "Drivers in the city", type: "number", min: 1000, max: 50000, log: true },
@@ -172,8 +172,8 @@ export function runSnowflake(p: SfP): SfR {
 export const snowflake: SimDef<SfP, SfR> = {
   id: "snowflake",
   title: "Snowflake IDs",
-  module: 19,
-  lessons: ["19.11", "12.6"],
+  module: 26,
+  lessons: ["26.11", "12.6"],
   blurb: "Many servers generate 64-bit IDs (time | worker | sequence) with no coordination. Push the rate, shrink the sequence bits, pick worker ids at random, and make one clock jump backwards - then count duplicate IDs.",
   params: [
     { key: "workers", label: "ID generators (servers)", type: "number", min: 1, max: 128 },

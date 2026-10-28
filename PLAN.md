@@ -192,7 +192,7 @@ identical.
 Later, as an optional extra: a **discrete-event mode** (an event queue sending
 individual requests) for lessons where order matters, such as Kafka
 partitions, leader election and consistent hashing. It's slower, but more
-honest for algorithm demos (module 19).
+honest for algorithm demos (module 26).
 
 ---
 

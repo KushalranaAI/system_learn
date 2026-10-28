@@ -64,7 +64,7 @@ export const hashRing: SimDef<P, R> = {
   id: "hash-ring",
   title: "Consistent hashing",
   module: 14,
-  lessons: ["14.2", "14.3", "19.1"],
+  lessons: ["14.2", "14.3", "26.1"],
   blurb: "Place real keys on nodes with modulo, a hash ring with virtual nodes, or rendezvous hashing. Add a node, then count moved keys and measure the load per node.",
   params: [
     { key: "nodes", label: "Nodes", type: "number", min: 2, max: 50 },

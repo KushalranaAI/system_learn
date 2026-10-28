@@ -7,7 +7,7 @@ export const OUTAGES: Preset[] = [
     title: "Cloudflare: the feature file that doubled",
     source: "Cloudflare · Nov 2025",
     blurb: "A generated config file grew past a hard limit and crashed the core proxy everywhere at once.",
-    lesson: "24.2",
+    lesson: "31.2",
     story: `On 18 November 2025 at 11:20 UTC, much of the web started returning Cloudflare 5xx errors.
 
 **What happened:**
@@ -21,7 +21,7 @@ export const OUTAGES: Preset[] = [
       "Run the incident. With one global proxy tier, what share of requests survive?",
       "Add a second proxy server (the old FL path) behind the load balancer and turn on health checks. Run it again.",
       "With two proxies, is each big enough to carry everything alone?",
-      "Read lesson 24.2: which guard rail on the config pipeline would have stopped the file before it shipped?",
+      "Read lesson 31.2: which guard rail on the config pipeline would have stopped the file before it shipped?",
     ],
     graph: build({
       nodes: [
@@ -41,7 +41,7 @@ export const OUTAGES: Preset[] = [
     title: "Cloudflare: one regular expression",
     source: "Cloudflare · Jul 2019",
     blurb: "A new WAF rule backtracked catastrophically and pinned every HTTP CPU worldwide for 27 minutes.",
-    lesson: "24.3",
+    lesson: "31.3",
     story: `On 2 July 2019 at 13:42 UTC, Cloudflare deployed a new rule to its Web Application Firewall managed rules.
 
 **What happened:**
@@ -74,7 +74,7 @@ export const OUTAGES: Preset[] = [
     title: "CrowdStrike: 8.5 million blue screens",
     source: "CrowdStrike · Jul 2024",
     blurb: "One content update crashed every Windows host that received it in the same hour. No staged rollout.",
-    lesson: "24.4",
+    lesson: "31.4",
     story: `On 19 July 2024 at 04:09 UTC, CrowdStrike shipped a content update (Channel File 291) to its Falcon sensor on Windows.
 
 **What happened:**
@@ -105,7 +105,7 @@ export const OUTAGES: Preset[] = [
     title: "AWS us-east-1: an empty DNS record",
     source: "AWS · Oct 2025",
     blurb: "A race in DynamoDB's DNS automation left its regional endpoint resolving to nothing; everything built on it followed.",
-    lesson: "24.5",
+    lesson: "31.5",
     story: `On 19-20 October 2025, AWS's us-east-1 region had a long, cascading outage.
 
 **What happened (AWS summary):**
@@ -140,7 +140,7 @@ export const OUTAGES: Preset[] = [
     title: "AWS S3: one mistyped command",
     source: "AWS · Feb 2017",
     blurb: "A playbook command removed too many servers, taking S3's index subsystem down for hours in us-east-1.",
-    lesson: "24.6",
+    lesson: "31.6",
     story: `On 28 February 2017 at 9:37 AM PST, an engineer debugging slow S3 billing ran an established playbook command to remove a small number of servers.
 
 **What happened (AWS summary):**
@@ -174,7 +174,7 @@ export const OUTAGES: Preset[] = [
     title: "Facebook: the internet forgot Facebook",
     source: "Facebook · Oct 2021",
     blurb: "A backbone command cut every data centre off; DNS servers then withdrew their own routes. Six hours dark.",
-    lesson: "24.7",
+    lesson: "31.7",
     story: `On 4 October 2021, Facebook, Instagram, WhatsApp and Messenger disappeared from the internet for about six hours.
 
 **What happened (Facebook engineering):**
@@ -187,7 +187,7 @@ export const OUTAGES: Preset[] = [
     tryThis: [
       "Run the incident. The data centres are fine - why does nothing succeed?",
       "Run \"Cache restart\" on the healthy design: what does bringing everything back at once do to the database?",
-      "Read lesson 24.7: what would out-of-band access have changed about the six hours?",
+      "Read lesson 31.7: what would out-of-band access have changed about the six hours?",
     ],
     graph: build({
       nodes: [
@@ -209,7 +209,7 @@ export const OUTAGES: Preset[] = [
     title: "GitLab: deleting the database",
     source: "GitLab · Jan 2017",
     blurb: "Under spam load, replication broke; while fixing it, an engineer wiped the primary. Five backup methods failed.",
-    lesson: "24.8",
+    lesson: "31.8",
     story: `On 31 January 2017, GitLab.com was down for about 18 hours and lost about six hours of data.
 
 **What happened (GitLab postmortem):**
@@ -245,7 +245,7 @@ export const OUTAGES: Preset[] = [
     title: "GitHub: 43 seconds, 24 hours",
     source: "GitHub · Oct 2018",
     blurb: "A 43-second network cut triggered a cross-country database failover, and writes split between two coasts.",
-    lesson: "24.9",
+    lesson: "31.9",
     story: `On 21 October 2018, GitHub was degraded for 24 hours and 11 minutes.
 
 **What happened (GitHub postmortem):**
@@ -257,7 +257,7 @@ export const OUTAGES: Preset[] = [
     tryThis: [
       "Run the incident with failover on. How long do writes fail before the promotion?",
       "Turn failover off. Is it better to be down, or to be up with diverged data?",
-      "Read lesson 24.9: when would you rather wait than fail over across regions?",
+      "Read lesson 31.9: when would you rather wait than fail over across regions?",
     ],
     graph: build({
       nodes: [
@@ -281,7 +281,7 @@ export const OUTAGES: Preset[] = [
     title: "Roblox: 73 hours down",
     source: "Roblox · Oct 2021",
     blurb: "Consul, which everything used to find everything, slowed to a halt - and the tools to debug it depended on it too.",
-    lesson: "24.10",
+    lesson: "31.10",
     story: `From 28 to 31 October 2021, Roblox was down for **73 hours**.
 
 **What happened (Roblox postmortem):**
@@ -315,7 +315,7 @@ export const OUTAGES: Preset[] = [
     title: "Fastly: one customer's valid config",
     source: "Fastly · Jun 2021",
     blurb: "A latent bug, triggered by one customer's ordinary config change, broke 85% of the network in a minute.",
-    lesson: "24.11",
+    lesson: "31.11",
     story: `On 8 June 2021 at 09:47 UTC, big sites (news, government, shops) started showing errors - all Fastly customers.
 
 **What happened (Fastly summary):**
@@ -329,7 +329,7 @@ export const OUTAGES: Preset[] = [
     tryThis: [
       "Run the incident. Why does a healthy origin not help?",
       "Delete the CDN and wire the client straight to the load balancer (failing open to origin). How many servers do you need?",
-      "Read lesson 24.11: how would cells have shrunk the blast radius?",
+      "Read lesson 31.11: how would cells have shrunk the blast radius?",
     ],
     graph: build({
       nodes: [
@@ -351,7 +351,7 @@ export const OUTAGES: Preset[] = [
     title: "Slack: the first Monday back",
     source: "Slack · Jan 2021",
     blurb: "Everyone came back from the holidays with cold caches at once, and the network between tiers didn't scale in time.",
-    lesson: "24.12",
+    lesson: "31.12",
     story: `On Monday 4 January 2021 - the first working day of the year - Slack was down for hours.
 
 **What happened (Slack engineering):**
@@ -387,7 +387,7 @@ export const OUTAGES: Preset[] = [
     title: "Google Cloud: a null pointer everywhere",
     source: "Google Cloud · Jun 2025",
     blurb: "A policy with blank fields crashed Service Control in every region; the restart herd then hammered Spanner.",
-    lesson: "24.13",
+    lesson: "31.13",
     story: `On 12 June 2025, Google Cloud API calls failed with 503s around the world for hours, and many services built on Google Cloud went down with it.
 
 **What happened (Google incident report):**

@@ -179,7 +179,7 @@ export function Sandbox() {
         <h4>Starting points <span className="muted small">{SCENARIOS.length}</span></h4>
         <label className="preset-search">
           <Search size={14} />
-          <input placeholder="Search: Netflix, outage, RAG, chat..." value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Search starting points" />
+          <input placeholder="Search: Netflix, outage, webhooks, RAG..." value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Search starting points" />
         </label>
         {PRESET_CATEGORIES.map((cat) => {
           const q = query.trim().toLowerCase();

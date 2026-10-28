@@ -7,7 +7,7 @@ export const INTERVIEW: Preset[] = [
     title: "URL shortener",
     source: "Interview classic",
     blurb: "Redirects are 99% reads: a CDN, a cache and one database. Survive a cold cache.",
-    lesson: "25.2",
+    lesson: "32.2",
     story: `**The question:** design bit.ly. Users create short links (writes) and millions of people follow them (reads).
 
 **Key numbers:** about 100:1 reads to writes. A popular service does on the order of 100k redirects/s at peak and a few hundred new links/s.
@@ -43,7 +43,7 @@ export const INTERVIEW: Preset[] = [
     title: "Rate limiter",
     source: "Interview classic",
     blurb: "A scraper sends 20k req/s and the limiter in front is switched off. Pick a limit that stops it without blocking offices.",
-    lesson: "25.3",
+    lesson: "32.3",
     story: `**The question:** design a rate limiter for a public API: limit each client to N requests per second across a fleet of servers.
 
 **Shape of the answer:**
@@ -78,7 +78,7 @@ export const INTERVIEW: Preset[] = [
     title: "News feed",
     source: "Interview classic",
     blurb: "Fan-out on write: every post is copied into followers' timelines by a consumer group that can't keep up.",
-    lesson: "25.4",
+    lesson: "32.4",
     story: `**The question:** design the home feed for a social network with 300M users.
 
 **Shape of the answer:**
@@ -115,7 +115,7 @@ export const INTERVIEW: Preset[] = [
     title: "Chat app",
     source: "Interview classic",
     blurb: "Gateways hold the connections, Kafka carries messages to delivery workers. Kill a gateway with no health checks.",
-    lesson: "25.5",
+    lesson: "32.5",
     story: `**The question:** design WhatsApp or Messenger: one-to-one and group messages, delivery ticks, offline users.
 
 **Shape of the answer:**
@@ -153,7 +153,7 @@ export const INTERVIEW: Preset[] = [
     title: "Notification system",
     source: "Interview classic",
     blurb: "Send requests go to a queue; four workers can't keep up with 3,000 notifications a second.",
-    lesson: "25.6",
+    lesson: "32.6",
     story: `**The question:** design a service that sends push, SMS and email notifications for other teams - 10M pushes in 5 minutes for a big campaign.
 
 **Shape of the answer:**
@@ -187,7 +187,7 @@ export const INTERVIEW: Preset[] = [
     title: "Search autocomplete",
     source: "Interview classic",
     blurb: "Every keystroke is a request. Two servers run hot; the trie is rebuilt from the query log.",
-    lesson: "25.7",
+    lesson: "32.7",
     story: `**The question:** design search-as-you-type: return the top suggestions for a prefix within about 50 ms.
 
 **Shape of the answer:**
@@ -223,7 +223,7 @@ export const INTERVIEW: Preset[] = [
     title: "Web crawler",
     source: "Interview classic",
     blurb: "A URL frontier feeds fetchers through a queue. Two fetchers for 1,200 pages a second.",
-    lesson: "25.8",
+    lesson: "32.8",
     story: `**The question:** crawl 1 billion pages a month and store them for indexing.
 
 **Key numbers:** 1B / (30 × 86,400 s) ≈ 400 pages/s on average; plan for 2-3x that. At ~100 KB per page that is about 100 TB a month.
@@ -257,7 +257,7 @@ export const INTERVIEW: Preset[] = [
     title: "Video platform",
     source: "Interview classic",
     blurb: "Uploads are transcoded in the background; viewers are served from the CDN. The origin runs hot.",
-    lesson: "25.9",
+    lesson: "32.9",
     story: `**The question:** design YouTube: upload, transcode, store and stream to 1M concurrent viewers.
 
 **Shape of the answer:**
@@ -293,7 +293,7 @@ export const INTERVIEW: Preset[] = [
     title: "Ride-hailing",
     source: "Interview classic",
     blurb: "Every driver sends a location every few seconds. The trip database is taking all of them and drowning.",
-    lesson: "25.10",
+    lesson: "32.10",
     story: `**The question:** design Uber: riders request trips, the nearest available driver is matched in under a second.
 
 **Key numbers:** 1M active drivers sending a location every 4 s is 250k updates/s - far more writes than trips.
@@ -330,7 +330,7 @@ export const INTERVIEW: Preset[] = [
     title: "Ticket booking",
     source: "Interview classic",
     blurb: "A big on-sale: 6,000 seat holds a second hit one database directly. Add a waiting room.",
-    lesson: "25.11",
+    lesson: "32.11",
     story: `**The question:** design Ticketmaster: sell 50k seats for a concert in a minute, fairly, without selling a seat twice.
 
 **Shape of the answer:**
@@ -365,7 +365,7 @@ export const INTERVIEW: Preset[] = [
     title: "File sync (Dropbox)",
     source: "Interview classic",
     blurb: "A metadata service plus background chunk processing. Uploads pile up in the queue.",
-    lesson: "25.12",
+    lesson: "32.12",
     story: `**The question:** design Dropbox: sync files across devices; a small edit to a 2 GB file must not re-upload 2 GB.
 
 **Shape of the answer:**
@@ -400,7 +400,7 @@ export const INTERVIEW: Preset[] = [
     title: "Payment system",
     source: "Interview classic",
     blurb: "Charges run as a saga with no safeguards, and a ledger consumer records every one. Make it never double-charge.",
-    lesson: "25.14",
+    lesson: "32.14",
     story: `**The question:** design a payment service: take a charge, call a card provider, record it - and never charge twice.
 
 **Shape of the answer:**
@@ -436,7 +436,7 @@ export const INTERVIEW: Preset[] = [
     title: "Leaderboard",
     source: "Interview classic",
     blurb: "Score updates go straight to the database at 5,000/s. Move the ranking into memory.",
-    lesson: "25.15",
+    lesson: "32.15",
     story: `**The question:** design a real-time leaderboard for a game with 50M players: top 100, and "what's my rank?".
 
 **Shape of the answer:**

@@ -23,6 +23,14 @@ export const myLab: Lab = {
 | `quiz`   | Picks an option; every option has a `why` | Picking the `correct` one |
 | `api`    | Lists endpoints (method, path, status) | Every `expect` entry is matched |
 | `design` | Builds on the canvas  | All `test.constraints` pass in the simulator |
+| `sim`    | Changes simulation parameters | Every goal over the simulation's metrics is met |
+
+### API steps
+
+Each `expect` entry lists the allowed `methods` and success `statuses`. `needsParam: true` requires a `:param` segment,
+and `pathMatch` is a case-insensitive regular expression the path must match (e.g. `"loans"`), so a step can check
+what the endpoint is about, not just its method. Add a reference `solution` (a list of endpoints): `labs.test.ts` checks
+that it meets every requirement.
 
 ### Design steps
 

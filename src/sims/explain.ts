@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { API_EXPLAIN } from "./api-explain";
 import { fmt } from "./types";
 
 export interface SimExplain {
@@ -232,4 +233,5 @@ export const EXPLAIN: Record<string, Fn> = {
     fix: p.strategy === "global" ? "Release in stages: a small canary first, with bake time longer than your time to detect." : m.peakAffected > 0.05 ? "Make the bake time longer than detection, or the first stage smaller." : "Turn on automatic rollback.",
     tradeoff: "Staged rollouts take hours; urgent fixes (security content) need a fast path that is still staged, just quicker.",
   }),
+  ...API_EXPLAIN,
 };

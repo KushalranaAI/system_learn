@@ -15,7 +15,7 @@ const chat = (llm: { replicas: number; batching: boolean }, cacheHit?: number) =
 
 export const aiLlmServing: Lab = {
   slug: "ai-llm-serving",
-  module: 26,
+  module: 33,
   title: "Serve an LLM chat app",
   product: "AI chat",
   summary: "Self-host an 8B chat model for a support chat. Batch requests on the GPU, fit the KV cache, add a semantic cache, survive losing it, and route easy prompts to a cheaper model.",

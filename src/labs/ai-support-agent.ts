@@ -16,7 +16,7 @@ const agent = (stepLimit: boolean, replicas: number) =>
 
 export const aiSupportAgent: Lab = {
   slug: "ai-support-agent",
-  module: 28,
+  module: 35,
   title: "An agent that resolves tickets",
   product: "Customer support",
   summary: "An agent reads support tickets, looks up orders, issues refunds and replies. Make a 6-step loop reliable, bound its cost, size the GPUs for a Monday spike, and decide what it may do without a human.",

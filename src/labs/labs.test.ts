@@ -2,12 +2,18 @@ import { describe, expect, it } from "vitest";
 import { runDesignTest, type Graph } from "../engine";
 import { simById } from "../sims";
 import { goalMet } from "../sims/types";
+import { checkApi } from "./api-check";
 import { LABS } from "./index";
 
 describe("every lab design step", () => {
   for (const lab of LABS) {
     let previous: Graph | null = null;
     lab.steps.forEach((step, i) => {
+      if (step.type === "quiz")
+        it(`${lab.slug} #${i + 1} "${step.title}": has exactly one correct option`, () => expect(step.options.filter((o) => o.correct)).toHaveLength(1));
+      if (step.type === "api" && step.solution)
+        it(`${lab.slug} #${i + 1} "${step.title}": the reference API meets every requirement`, () =>
+          expect(checkApi(step.solution!, step.expect).filter((r) => !r.ok).map((r) => r.goal)).toEqual([]));
       if (step.type === "sim") {
         it(`${lab.slug} #${i + 1} "${step.title}": the sim solution meets every goal and the start does not`, () => {
           const def = simById(step.sim);

@@ -7,7 +7,7 @@ export const AI_SCENARIOS: Preset[] = [
     title: "Chat serving on GPUs",
     source: "AI systems",
     blurb: "A chat product on a 70B model with 8 replicas and a semantic cache. Launch day traffic doesn't fit.",
-    lesson: "30.1",
+    lesson: "37.1",
     story: `A chat assistant like ChatGPT is mostly a GPU capacity problem.
 
 **Key numbers:**
@@ -41,7 +41,7 @@ export const AI_SCENARIOS: Preset[] = [
     title: "RAG help desk",
     source: "AI systems",
     blurb: "Questions retrieve help articles from a vector index before the model answers. Ingestion can't keep up with edits.",
-    lesson: "27.4",
+    lesson: "34.4",
     story: `A help-centre assistant answers questions from your own articles with **retrieval-augmented generation**:
 
 1. Embed the question and find the nearest article chunks in a **vector database**.
@@ -76,7 +76,7 @@ export const AI_SCENARIOS: Preset[] = [
     title: "Customer support agent",
     source: "AI systems",
     blurb: "An agent looks up orders and help articles in a loop. No step limit, so a few confused tasks burn the GPUs.",
-    lesson: "30.4",
+    lesson: "37.4",
     story: `A support agent doesn't just answer: it acts. Each task is a loop - the model thinks, calls a tool (look up the order, search help articles, issue a refund), reads the result, and repeats until done or it hands off to a human.
 
 **Why it's expensive:** every step is a model call. A 5-step task costs 5 model calls and 5x the latency. A few percent of tasks get confused and loop - without a **step limit** they can run 30 steps, and those few tasks eat a large share of the GPUs.
@@ -110,7 +110,7 @@ export const AI_SCENARIOS: Preset[] = [
     title: "Code assistant",
     source: "AI systems",
     blurb: "Inline completions on a small fast model with context from a repo index. The latency budget is tight.",
-    lesson: "30.2",
+    lesson: "37.2",
     story: `Inline code completion has a brutal latency budget: a suggestion that arrives after the developer has typed on is useless. Products aim for a few hundred milliseconds end to end.
 
 **Shape of the system:**
@@ -146,7 +146,7 @@ export const AI_SCENARIOS: Preset[] = [
     title: "AI answer engine",
     source: "AI systems",
     blurb: "Search the web index, then have a frontier model write a cited answer. The big model can't keep up.",
-    lesson: "30.3",
+    lesson: "37.3",
     story: `An answer engine (in the style of Perplexity or AI search results) combines search and a language model:
 
 1. **Plan** the query (rewrite it, maybe split it into sub-queries).
@@ -183,7 +183,7 @@ A crawler and ingestion pipeline keep the index fresh. The model is the expensiv
     title: "Bots on a free LLM endpoint",
     source: "AI systems",
     blurb: "Scripts hammer a free chat endpoint with 400 prompts a second. There is no rate limiter, and GPUs are expensive.",
-    lesson: "26.4",
+    lesson: "33.4",
     story: `A free AI feature is an attractive target: people script it as a free model API, scrape it, or just flood it. Every prompt costs GPU time, so abuse is a direct bill and it starves real users.
 
 **Defences:**
@@ -216,7 +216,7 @@ A crawler and ingestion pipeline keep the index fresh. The model is the expensiv
     title: "Recommendation system",
     source: "AI systems",
     blurb: "Candidates from a vector index, ranked by a model on GPUs, features updated from an event stream that's falling behind.",
-    lesson: "30.5",
+    lesson: "37.5",
     story: `A "for you" feed is built in stages:
 
 1. **Candidate generation:** a two-tower model embeds users and items; an approximate nearest-neighbour search pulls a few thousand candidates from millions of items.

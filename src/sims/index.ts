@@ -15,6 +15,7 @@ import { agentReliability } from "./agents";
 import { kvCache, llmBatching, modelCascade, semanticCache } from "./ai";
 import { annIndex, ragRetrieval } from "./rag";
 import { stagedRollout } from "./rollout";
+import { API_SIMS } from "./api";
 import type { SimDef } from "./types";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -22,6 +23,7 @@ export const SIMS: SimDef<any, any>[] = [
   cacheStampede, pushVsPoll, serviceChain, retryStorm, quorum, hashRing, kafkaLog, saga, eventWindows,
   bloom, hyperloglog, countMin, merkle, gossip, raft, tokenBucket, skipList, lsmBtree, geohashSim, snowflake, wal,
   stagedRollout, llmBatching, kvCache, semanticCache, modelCascade, ragRetrieval, annIndex, agentReliability,
+  ...API_SIMS,
 ];
 
 export const simById = (id: string) => SIMS.find((s) => s.id === id);

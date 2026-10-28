@@ -96,8 +96,8 @@ export function runLlmBatching(p: BatchP): BatchR {
 export const llmBatching: SimDef<BatchP, BatchR> = {
   id: "llm-batching",
   title: "LLM batching: throughput vs latency",
-  module: 26,
-  lessons: ["26.3", "26.2"],
+  module: 33,
+  lessons: ["33.3", "33.2"],
   blurb: "A GPU decodes one token for every sequence in the batch per step. Bigger batches multiply throughput and cut cost per token, but each user's stream slows down and first tokens arrive later.",
   params: [
     { key: "model", label: "Model", type: "select", options: [{ value: "8b", label: "8B" }, { value: "70b", label: "70B" }] },
@@ -196,8 +196,8 @@ export function runKvCache(p: KvP): KvR {
 export const kvCache: SimDef<KvP, KvR> = {
   id: "kv-cache",
   title: "GPU memory and the KV cache",
-  module: 26,
-  lessons: ["26.3"],
+  module: 33,
+  lessons: ["33.3"],
   blurb: "Weights take a fixed slice of GPU memory; every running conversation needs its own KV cache on top. See how precision, GQA, context length and PagedAttention decide how many users one replica can serve.",
   params: [
     { key: "model", label: "Model", type: "select", options: Object.entries(MODELS).map(([value, m]) => ({ value, label: m.label })) },
@@ -297,8 +297,8 @@ export function runSemanticCache(p: SemP): SemR {
 export const semanticCache: SimDef<SemP, SemR> = {
   id: "semantic-cache",
   title: "Semantic cache threshold",
-  module: 26,
-  lessons: ["26.5"],
+  module: 33,
+  lessons: ["33.5"],
   blurb: "Answer a new question with a cached answer when its embedding is close enough to an earlier one. A low threshold saves money and time - and serves wrong answers to questions that only look similar.",
   params: [
     { key: "threshold", label: "Similarity threshold (cosine)", type: "number", min: 0.8, max: 1, step: 0.005 },
@@ -407,8 +407,8 @@ export function runModelCascade(p: CascadeP): CascadeR {
 export const modelCascade: SimDef<CascadeP, CascadeR> = {
   id: "model-cascade",
   title: "Model cascade: small first, escalate when unsure",
-  module: 26,
-  lessons: ["26.4", "29.5"],
+  module: 33,
+  lessons: ["33.4", "36.5"],
   blurb: "Send every request to a cheap, fast model and only escalate to the big one when the small model isn't confident. The confidence threshold trades quality against cost and latency.",
   params: [
     { key: "mode", label: "Routing", type: "select", options: [{ value: "large", label: "Large model only" }, { value: "small", label: "Small model only" }, { value: "cascade", label: "Cascade (small → large)" }] },

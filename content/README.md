@@ -3,7 +3,7 @@
 Original, openly licensed lessons for learning backend system design from zero
 (CC BY-SA 4.0), by Kushal Rana and contributors.
 
-- [curriculum.md](curriculum.md) is the full syllabus: 3 parts, 19 modules,
+- [curriculum.md](curriculum.md) is the full syllabus: 5 parts, 37 modules,
   and a hands-on exercise in every lesson.
 - One folder per module. Each lesson is a Markdown file with front-matter
   (`module`, `lesson`, `title`, `minutes`, optional `type: lab`).
