@@ -8,6 +8,8 @@ export interface ApiExpectation {
   statuses: number[];
   /** path must contain a :param segment */
   needsParam?: boolean;
+  /** path must match this regular expression (case-insensitive), e.g. "comments" */
+  pathMatch?: string;
   why: string;
 }
 
@@ -20,7 +22,15 @@ export type LabStep =
       question: string;
       options: { text: string; correct?: boolean; why: string }[];
     }
-  | { type: "api"; title: string; body: string; baseUrl: string; expect: ApiExpectation[] }
+  | {
+      type: "api";
+      title: string;
+      body: string;
+      baseUrl: string;
+      expect: ApiExpectation[];
+      /** endpoints that meet every expectation - verified by tests */
+      solution?: { method: string; path: string; status: number }[];
+    }
   | {
       type: "design";
       title: string;

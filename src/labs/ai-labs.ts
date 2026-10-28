@@ -3,5 +3,5 @@ import { aiRagHelpdesk } from "./ai-rag-helpdesk";
 import { aiSupportAgent } from "./ai-support-agent";
 import type { Lab } from "./types";
 
-/** Labs for Part 4 (AI system design). */
+/** Labs for Part 5 (AI system design). */
 export const AI_LABS: Lab[] = [aiLlmServing, aiRagHelpdesk, aiSupportAgent];

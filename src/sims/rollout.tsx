@@ -78,8 +78,8 @@ export function runStagedRollout(p: RolloutP): RolloutR {
 export const stagedRollout: SimDef<RolloutP, RolloutR> = {
   id: "staged-rollout",
   title: "Global push vs staged rollout",
-  module: 24,
-  lessons: ["24.4", "24.2", "24.15"],
+  module: 31,
+  lessons: ["31.4", "31.2", "31.15"],
   blurb: "A bad change goes out to the fleet. Push it everywhere at once and every host breaks before anyone notices; release it in canaries and waves with automatic rollback and the blast radius stays small.",
   params: [
     { key: "strategy", label: "Release strategy", type: "select", options: [{ value: "global", label: "Global push (everyone in ~2 min)" }, { value: "canary", label: "Canary, then everyone" }, { value: "waves", label: "Staged waves" }] },

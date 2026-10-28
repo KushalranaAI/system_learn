@@ -2,7 +2,7 @@ import type { Lab } from "./types";
 
 export const algorithmsInAction: Lab = {
   slug: "algorithms-in-action",
-  module: 19,
+  module: 26,
   title: "Algorithms in action",
   product: "Under the hood",
   summary: "Six production problems, six classic algorithms. Pick the data structure that solves each one in the least memory and time.",

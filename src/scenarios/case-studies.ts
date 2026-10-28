@@ -7,7 +7,7 @@ export const CASE_STUDIES: Preset[] = [
     title: "Netflix: video from inside your ISP",
     source: "Netflix",
     blurb: "Open Connect appliances serve the video; a small control plane on AWS does everything else.",
-    lesson: "23.1",
+    lesson: "30.1",
     story: `Netflix splits its system in two:
 
 - **Open Connect** - Netflix's own CDN. Open Connect Appliances (OCAs) are servers full of disks installed inside ISP networks and at internet exchanges, given to ISPs at no charge. They hold the catalogue and serve all video bytes. They are filled overnight, during off-peak hours, with what Netflix predicts each region will watch.
@@ -44,7 +44,7 @@ Netflix pioneered chaos engineering (Chaos Monkey kills instances in production)
     title: "Disney+ Hotstar: one cricket match, tens of millions live",
     source: "Disney+ Hotstar",
     blurb: "Concurrency jumps by millions in minutes when a star walks out to bat. Pre-scale or fall over.",
-    lesson: "23.2",
+    lesson: "30.2",
     story: `Hotstar (now JioHotstar) streams Indian cricket. Its audience is spiky in a way few platforms see: millions join in minutes when a key batter comes in, and leave together at the innings break.
 
 **Key numbers:** 25.3 million concurrent viewers for the India-New Zealand World Cup semi-final in 2019; about 59 million (5.9 crore) for the India-Australia World Cup final in November 2023, which Hotstar reported as its peak.
@@ -83,7 +83,7 @@ Netflix pioneered chaos engineering (Chaos Monkey kills instances in production)
     title: "WhatsApp: millions of connections per server",
     source: "WhatsApp",
     blurb: "Erlang servers hold millions of connections each and store messages only until they are delivered.",
-    lesson: "23.3",
+    lesson: "30.3",
     story: `WhatsApp is famous for doing a lot with very little.
 
 - Servers run **Erlang** on FreeBSD. Each connection is a lightweight Erlang process; in 2012 the team reported over **2 million TCP connections on one server**.
@@ -119,7 +119,7 @@ Netflix pioneered chaos engineering (Chaos Monkey kills instances in production)
     title: "Discord: trillions of messages",
     source: "Discord",
     blurb: "ScyllaDB behind Rust data services that coalesce identical reads. Take the coalescing away and see.",
-    lesson: "23.4",
+    lesson: "30.4",
     story: `Discord stores every message ever sent. In 2017 that was billions of messages on 12 Cassandra nodes; by early 2022 it was trillions on **177 Cassandra nodes**, with hot partitions (one huge server's busy channel) causing latency spikes and constant on-call firefighting.
 
 **What they changed (2022-2023):**
@@ -154,7 +154,7 @@ Netflix pioneered chaos engineering (Chaos Monkey kills instances in production)
     title: "Instagram: scaling Postgres",
     source: "Instagram",
     blurb: "Thousands of logical shards on a few Postgres machines, IDs that encode time and shard, and a CDN for photos.",
-    lesson: "23.6",
+    lesson: "30.6",
     story: `Instagram grew on Django and PostgreSQL, and kept Postgres by sharding it.
 
 - **Logical shards:** data is split into thousands of logical shards (Postgres schemas) by user id, mapped onto far fewer physical database servers. Moving a shard to a new machine is a copy, not a re-shard.
@@ -189,7 +189,7 @@ Netflix pioneered chaos engineering (Chaos Monkey kills instances in production)
     title: "Shopify: Black Friday flash sales",
     source: "Shopify · BFCM 2024",
     blurb: "Pods isolate shops, the edge sheds bots, and checkout is queued. Run the Black Friday surge.",
-    lesson: "23.9",
+    lesson: "30.9",
     story: `Shopify hosts millions of shops on one platform, and Black Friday-Cyber Monday (BFCM) is its biggest weekend.
 
 **BFCM 2024 numbers (Shopify):** a peak of 284 million requests per minute at the edge, over 80 million per minute on app servers, and 10.5 trillion database queries over the weekend.
@@ -231,7 +231,7 @@ Netflix pioneered chaos engineering (Chaos Monkey kills instances in production)
     title: "DynamoDB on Prime Day",
     source: "AWS · Prime Day 2025",
     blurb: "Request routers in front of thousands of partitions: predictable at any scale, as long as keys spread.",
-    lesson: "23.11",
+    lesson: "30.11",
     story: `Amazon DynamoDB is a key-value database built to give single-digit millisecond latency at any scale.
 
 **Prime Day 2025 (AWS):** Amazon's own sites, Alexa and fulfilment centres made tens of trillions of DynamoDB calls, peaking at **151 million requests per second**.
@@ -270,7 +270,7 @@ Netflix pioneered chaos engineering (Chaos Monkey kills instances in production)
     title: "Uber: real-time dispatch",
     source: "Uber",
     blurb: "Driver locations stream into an H3-indexed supply view; dispatch matches riders in one city at a time.",
-    lesson: "23.5",
+    lesson: "30.5",
     story: `Uber matches riders and drivers in real time in hundreds of cities.
 
 - **Locations:** driver apps send their position every few seconds. These updates are the bulk of the write traffic.

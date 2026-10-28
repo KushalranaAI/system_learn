@@ -3,7 +3,7 @@ import type { Lab } from "./types";
 
 export const rideDispatch: Lab = {
   slug: "ride-dispatch",
-  module: 19,
+  module: 26,
   title: "Ride dispatch",
   product: "Maps",
   summary: "Tens of thousands of drivers report where they are every few seconds; riders want a car in seconds. Index locations by cell, stream updates through a log, and never offer one driver to two riders.",

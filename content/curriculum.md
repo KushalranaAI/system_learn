@@ -1,6 +1,6 @@
 # Curriculum
 
-Four parts and thirty modules. Each module starts with a problem a growing
+Five parts and thirty-seven modules. Each module starts with a problem a growing
 app runs into, teaches the idea that solves it, and ends with a hands-on lab.
 
 Each lesson below lists **Learn**, the ideas it teaches, and **Try**, the
@@ -204,168 +204,260 @@ hands-on exercise (on the simulator canvas or on paper).
 
 ---
 
-## Part 3 – Under the hood
+## Part 3 – API design
 
-### Module 19 – Classic algorithms in action
+### Module 19 – What an API is
 | # | Lesson | Learn | Try |
 |---|--------|-------|-----|
-| 19.1 | Consistent and rendezvous hashing | Spreading keys with minimal movement | Simulate adding/removing nodes |
-| 19.2 | Bloom filters | Fast "definitely not" checks, false-positive rate | Tune size vs error rate |
-| 19.3 | Count-min sketch | Approximate frequency counts | Find heavy hitters |
-| 19.4 | HyperLogLog | Counting unique items in tiny memory | Count unique visitors |
-| 19.5 | Merkle trees | Detecting differences between replicas | Sync two replicas |
-| 19.6 | Gossip protocols | Spreading state without a centre | Watch a rumour spread |
-| 19.7 | Raft | Elections and log replication | Break a leader, watch recovery |
-| 19.8 | LSM trees vs B-trees | Write- vs read-optimised storage engines | Compare write amplification |
-| 19.9 | Geohash and quadtrees | Finding nearby things | Find drivers near a rider |
-| 19.10 | Rate limiter algorithms | Token bucket internals | Simulate bursts |
-| 19.11 | Snowflake IDs | Time-ordered unique IDs | Decode an ID |
-| 19.12 | Skip lists | Sorted sets (Redis ZSET) | Build a leaderboard |
-| 19.13 | Write-ahead logs | Durability and crash recovery | Recover after a crash |
+| 19.1 | APIs are contracts | Producers and consumers, the contract vs the implementation, Hyrum's law | List every API one app depends on |
+| 19.2 | What makes an API good | Predictable, consistent, hard to misuse, small surface, clear errors, evolvable | Review a badly designed endpoint list |
+| 19.3 | APIs as a product and a business | Private, partner and public APIs; pricing models; developer experience; the cost of change | Price a weather API |
+| 19.4 | The network under every API | The narrow waist of IP, latency vs throughput, bandwidth-delay, sockets and connection reuse | Work out a transfer time by hand |
+| 19.5 | HTTP for API designers | Methods, safety and idempotency, status code families, headers, HTTP/1.1 → 2 → 3 | Pick a status code for six situations |
+| 19.6 | Beyond request and response | RPC, long polling, SSE, WebSockets, webhooks | Pick a channel for four features |
+| 19.7 | Data formats | JSON, XML, CSV, Protobuf, Avro, MessagePack; schemas, size and evolution | Estimate the bandwidth a format saves |
+| 19.8 | Lab: a library loans API | Resources, methods, errors and a payload format | Design and check the contract |
 
-### Module 20 – Networking under the hood
+### Module 20 – API styles: REST, GraphQL and gRPC
 | # | Lesson | Learn | Try |
 |---|--------|-------|-----|
-| 20.1 | DNS in depth | Resolvers, the root/TLD/authoritative chain, TTLs, negative caching, why DNS outages are global | Trace a lookup and pick TTLs for a failover record |
-| 20.2 | TCP and congestion control | Handshakes, windows, slow start, Cubic vs BBR, head-of-line blocking | Explain why the first request on a new connection is slow |
-| 20.3 | TLS and certificates | The TLS 1.3 handshake, session resumption, certificate chains, expiry outages | Plan certificate rotation for 500 domains |
-| 20.4 | HTTP/2, HTTP/3 and QUIC | Multiplexing, header compression, QUIC over UDP, connection migration | Choose a protocol for a mobile app |
-| 20.5 | BGP and anycast | Autonomous systems, route announcements, anycast for CDNs and DNS, route leaks | Explain how one BGP change took Facebook offline |
-| 20.6 | Inside a load balancer | L4 vs L7 internals, Maglev-style consistent hashing, connection tracking, draining | Design a load balancer tier for 10M connections |
+| 20.1 | Architectural styles at a glance | What a style constrains; REST, RPC, GraphQL, event-driven, SOAP's legacy | Name the style of five real APIs |
+| 20.2 | REST: the constraints | Fielding's six constraints, resources and representations, hypermedia, maturity levels | Find the constraints a "REST" API breaks |
+| 20.3 | Designing a RESTful API | Naming, nesting, actions, errors (RFC 9457), PATCH, bulk and long-running operations, OpenAPI | Design a project-tracker API |
+| 20.4 | GraphQL | Schemas, queries, mutations, subscriptions, resolvers, N+1 and DataLoader, cost limits | Write the query for one screen |
+| 20.5 | gRPC | Protobuf contracts, HTTP/2, four call types, deadlines, status codes, gRPC-Web | Define a streaming service |
+| 20.6 | Choosing a style | A side-by-side comparison, common combinations, backends-for-frontends | Choose styles for a product with three audiences |
+| 20.7 | Lab: pick the right style | Partners, mobile and internal services | Fix a slow screen and an N+1 |
 
-### Module 21 – Database internals
+### Module 21 – API security
 | # | Lesson | Learn | Try |
 |---|--------|-------|-----|
-| 21.1 | How a query runs | Parser, planner, cost model, executor, statistics, plan caching | Read an EXPLAIN plan and spot the mistake |
-| 21.2 | MVCC and isolation under the hood | Row versions, snapshots, visibility rules, write skew | Show why two doctors both went off call |
-| 21.3 | Locks, latches and deadlocks | Row and table locks, lock queues, deadlock detection, lock timeouts | Untangle a deadlock from a log |
-| 21.4 | Replication internals | WAL shipping, logical replication, binlogs, replication slots | Pick a replication method for a zero-downtime migration |
-| 21.5 | Vacuum, compaction and bloat | Dead tuples, autovacuum, transaction ID wraparound, LSM compaction | Diagnose a table that keeps growing |
-| 21.6 | Inside distributed SQL | Ranges, Raft per range, TrueTime and hybrid clocks, distributed transactions | Follow a write through Spanner or CockroachDB |
+| 21.1 | How APIs get attacked | The OWASP API Security Top 10 (2023), BOLA, threat modelling an endpoint | Threat-model one endpoint |
+| 21.2 | TLS for APIs | What TLS gives you, the TLS 1.3 handshake, certificates, HSTS, mutual TLS | Decide where TLS terminates |
+| 21.3 | Validating input | Schemas, allowlists, size limits, injection, mass assignment, SSRF | Write validation rules for a signup endpoint |
+| 21.4 | Cross-origin resource sharing (CORS) | Same-origin policy, simple vs preflighted requests, credentials, common mistakes | Fix a broken CORS policy |
+| 21.5 | Authentication and authorization | API keys, sessions, bearer tokens, JWTs and their pitfalls, RBAC/ABAC/ReBAC | Choose token lifetimes |
+| 21.6 | OAuth 2 | Roles, scopes, authorization code + PKCE, client credentials, device flow, refresh tokens, OAuth 2.1 | Pick the flow for four clients |
+| 21.7 | OpenID Connect and SAML | ID tokens vs access tokens, discovery, SAML assertions, enterprise SSO | Add "Sign in with…" to an app |
+| 21.8 | Security in layers | Gateway, WAF, limits, secrets, logging, API inventory: one request through every layer | Write a launch checklist |
+| 21.9 | Lab: lock down a banking API | Five findings from a security review | Fix them one by one |
 
-### Module 22 – Storage, search and data at scale
+### Module 22 – Designing APIs that last
 | # | Lesson | Learn | Try |
 |---|--------|-------|-----|
-| 22.1 | Object storage | How S3-style stores reach 11 nines: erasure coding, metadata, consistency | Estimate storage overhead of 3× replication vs 8+4 erasure coding |
-| 22.2 | Inverted indexes and search ranking | Tokenising, posting lists, BM25, sharding a search index | Index three documents by hand |
-| 22.3 | Column stores and OLAP | Row vs column layout, compression, vectorised execution, data warehouses | Choose a store for a dashboard over 10B events |
-| 22.4 | Time-series data | Downsampling, retention, high cardinality, Prometheus-style storage | Design metrics storage for 1M series |
-| 22.5 | Distributed file systems | GFS/HDFS/Colossus: chunk servers, masters, replication | Survive a disk failure every hour |
-| 22.6 | From MapReduce to Spark and dataflow | Batch jobs, shuffles, DAGs, exactly-once in streaming engines | Turn a nightly batch job into a streaming one |
+| 22.1 | Versioning | What counts as breaking; URL, header, media-type and date-based versions | Choose a versioning scheme |
+| 22.2 | Evolving without breaking | Tolerant readers, expand and contract, deprecation and Sunset headers, usage tracking | Plan the retirement of an endpoint |
+| 22.3 | Data fetching patterns | Pagination, sparse fields, expansion, batching, client-adapting APIs and BFFs | Redesign a chatty screen |
+| 22.4 | Idempotency in API design | Safe and idempotent methods, Idempotency-Key, storing results, conflicts | Make order creation safe to retry |
+| 22.5 | Rate limits and quotas in the contract | Quotas vs limits, tiers, 429 and Retry-After, RateLimit headers, cost-based limits | Write the limits section of an API's docs |
+| 22.6 | Events and webhooks | Webhooks, signatures, retries, ordering, thin vs fat events, AsyncAPI and CloudEvents | Design a webhook system |
+| 22.7 | Cookies and sessions | Cookie attributes, session cookies vs tokens, CSRF, SameSite | Secure a browser session |
+| 22.8 | Lab: evolve an orders API | Breaking changes, deprecation, pagination, retries and webhooks | Ship changes without breaking clients |
 
-### Module 23 – Real-world architectures
+### Module 23 – Fast, reliable APIs
 | # | Lesson | Learn | Try |
 |---|--------|-------|-----|
-| 23.1 | Netflix: streaming to hundreds of millions | Open Connect appliances inside ISPs, the control plane on AWS, chaos engineering, regional evacuation | Estimate peak egress for a global premiere |
-| 23.2 | Disney+ Hotstar: tens of millions watching one match | Pre-scaling ahead of a spike, ladder-based autoscaling, panic mode and graceful degradation | Plan capacity for a 50M-viewer final |
-| 23.3 | WhatsApp: millions of connections per server | Erlang/BEAM, one process per connection, store-and-forward, tiny teams | Size a chat fleet for 2B users |
-| 23.4 | Discord: trillions of messages | Cassandra to ScyllaDB, hot partitions, Rust data services with request coalescing | Fix a hot channel partition |
-| 23.5 | Uber: real-time dispatch | H3 hexagons, supply/demand matching, geo-sharding, surge | Match riders to drivers in one city |
-| 23.6 | Instagram: scaling Postgres | Sharding by user, logical shards, ID generation, Cassandra for feeds | Choose a shard key for likes |
-| 23.7 | Twitter/X: building timelines | Fan-out on write, the celebrity problem, hybrid fan-out, Redis timelines | Decide who gets fan-out on read |
-| 23.8 | YouTube: video at planetary scale | Upload pipeline, transcoding ladders, Vitess for MySQL sharding, edge caching | Design the upload-to-watch path |
-| 23.9 | Shopify: surviving flash sales | Pods (cells), load shedding, the checkout queue, BFCM game days | Keep checkout up during a sneaker drop |
-| 23.10 | Stripe: payments that never double-charge | Idempotency keys, the ledger, retries with backoff, API versioning | Make a charge endpoint safe to retry |
-| 23.11 | Amazon DynamoDB: predictable at any scale | Partitions, adaptive capacity, Prime Day peaks, cell-based design | Spread a hot partition key |
-| 23.12 | Figma: real-time multiplayer | A server-authoritative sync engine, conflict resolution per property, sharding Postgres | Merge two people editing one shape |
+| 23.1 | Server-side vs client-side rendering | SSR, CSR, static generation, streaming, hydration; Core Web Vitals | Pick a rendering mode for three pages |
+| 23.2 | Speeding up page loads | Compression, fewer round trips, resource hints, Early Hints, lazy loading, debouncing and throttling | Cut a page's load time in half |
+| 23.3 | Caching at every layer | Browser, CDN, gateway, application and database caches; Cache-Control, ETags, Vary | Set cache headers for five endpoints |
+| 23.4 | Retries and circuit breakers from the client | What to retry, backoff and jitter, budgets, Retry-After, breakers and fallbacks | Write a client retry policy |
+| 23.5 | Monitoring APIs | RED metrics, SLOs per endpoint, synthetic checks, tracing, per-consumer analytics | Build an API dashboard |
+| 23.6 | Lab: make a storefront feel instant | Search-as-you-type, cache headers, a CDN and a slow dependency | Get ready for a sale |
 
-### Module 24 – Postmortems: why big systems fail
+### Module 24 – Estimating API response time
 | # | Lesson | Learn | Try |
 |---|--------|-------|-----|
-| 24.1 | How to read a postmortem | Blameless culture, timelines, trigger vs root cause vs contributing factors | Write the timeline for an outage you saw |
-| 24.2 | Cloudflare, Nov 2025: a file that doubled | A generated feature file grew past a hard limit and crashed the core proxy worldwide | Add a guard rail to a config pipeline |
-| 24.3 | Cloudflare, Jul 2019: one regular expression | Catastrophic backtracking pushed every CPU to 100%; global WAF rules without staging | Spot a dangerous regex |
-| 24.4 | CrowdStrike, Jul 2024: 8.5 million blue screens | A content update read out of bounds in a kernel driver; no staged rollout | Design a staged rollout for agent updates |
-| 24.5 | AWS us-east-1, Oct 2025: a DNS race | A race in DynamoDB's DNS automation emptied an endpoint record; the dependency cascade that followed | Map the dependencies of one region |
-| 24.6 | AWS S3, Feb 2017: one mistyped command | Removing too many servers took down S3's index; slow cold restarts; the status page hosted on S3 | Add safety limits to an ops tool |
-| 24.7 | Facebook, Oct 2021: the internet forgot Facebook | A backbone command withdrew BGP routes; DNS servers withdrew themselves; badges stopped working | Plan out-of-band access |
-| 24.8 | GitLab, Jan 2017: deleting the database | rm -rf on the wrong host and five backup methods that didn't work | Test a restore, not a backup |
-| 24.9 | GitHub, Oct 2018: 43 seconds, 24 hours | A brief network partition, cross-coast failover and divergent writes | Decide between availability and consistency |
-| 24.10 | Roblox, Oct 2021: 73 hours down | Consul under a new streaming feature, BoltDB freelist growth, circular dependencies | Remove a circular dependency |
-| 24.11 | Fastly, Jun 2021: one customer's config | A latent bug triggered by a valid config took down 85% of the network in a minute | Shrink a blast radius |
-| 24.12 | Slack, Jan 2021: the first Monday back | Traffic after the holidays, AWS Transit Gateway scaling, autoscaling that made it worse | Pre-scale for a known spike |
-| 24.13 | Google Cloud, Jun 2025: a null pointer everywhere | A policy with blank fields crashed Service Control in every region; no feature flag; retry herds | Gate a new code path behind a flag |
-| 24.14 | Knight Capital, 2012: $440M in 45 minutes | A partial deploy reused an old flag and woke dead code | Design a safe deploy checklist |
-| 24.15 | Patterns behind the outages | Global config pushes, missing staged rollouts, retry storms, hidden dependencies, cells and blast radius | Score your system against the patterns |
+| 24.1 | Response time, latency and processing time | What users wait for, what to measure, percentiles | Split one request's time into parts |
+| 24.2 | Estimating processing time | CPU, queries, cache lookups, downstream calls, queueing | Estimate a server's processing time |
+| 24.3 | Estimating network latency | Propagation, handshakes, slow start, transfer time, distance tables | Estimate a first call from another continent |
+| 24.4 | A response-time budget, end to end | Adding it all up, where to cut, budgets per tier | Write a budget for one endpoint |
+| 24.5 | Lab: budget a call across the world | Handshakes, edges, payloads and physics | Hit the budget for far-away users |
 
-### Module 25 – The interview playbook
+### Module 25 – API design problems
 | # | Lesson | Learn | Try |
 |---|--------|-------|-----|
-| 25.1 | How design interviews work | What interviewers score, a 45-minute plan, driving the conversation | Run a mock interview on yourself |
-| 25.2 | Design a URL shortener | Key generation, redirects, caching, analytics | Handle 100k redirects/s |
-| 25.3 | Design a rate limiter | Algorithms, where it runs, distributed counters, failure modes | Limit 1,000 API keys across 50 servers |
-| 25.4 | Design a news feed | Fan-out on write vs read, ranking, celebrities | Build a feed for 300M users |
-| 25.5 | Design a chat app | Connections, delivery receipts, ordering, group fan-out, offline sync | Deliver messages with ticks |
-| 25.6 | Design a notification system | Channels, templates, priorities, dedupe, user preferences | Send 10M pushes in 5 minutes |
-| 25.7 | Design search autocomplete | Tries, top-k per prefix, caching, freshness | Answer each keystroke in 50 ms |
-| 25.8 | Design a web crawler | Frontier, politeness, dedupe with Bloom filters, scale | Crawl 1B pages a month |
-| 25.9 | Design a video platform | Upload, transcode, storage, CDN, recommendations | Serve 1M concurrent viewers |
-| 25.10 | Design a ride-hailing app | Location updates, geo indexing, matching, trip state | Match in under a second |
-| 25.11 | Design a ticket booking system | Seat holds, contention, queues for big on-sales, payment | Sell 50k seats in a minute fairly |
-| 25.12 | Design file sync (Dropbox) | Chunking, dedupe, metadata service, sync conflicts | Sync a 2 GB file edit cheaply |
-| 25.13 | Design a collaborative editor | OT vs CRDTs, presence, snapshots | Merge concurrent edits |
-| 25.14 | Design a payment system | Ledgers, idempotency, reconciliation, provider failures | Never double-charge |
-| 25.15 | Design a leaderboard | Sorted sets, sharded top-k, real-time vs periodic | Rank 50M players |
-| 25.16 | Design a distributed cache | Partitioning, replication, eviction, hot keys | Build a 10 TB cache cluster |
-| 25.17 | Design metrics and monitoring | Ingestion, time-series storage, alerting, cardinality | Alert within 30 s on 1M series |
+| 25.1 | A method for designing any API | Requirements → resources → style → contract → cross-cutting concerns → evaluation | Use it on a to-do API |
+| 25.2 | Design a search API | Search and suggest endpoints, query parameters, ranking, deep paging, caching | Budget a typeahead |
+| 25.3 | Design a file API | Upload sessions, presigned URLs, resumable and multipart uploads, range downloads | Design uploads for flaky networks |
+| 25.4 | Design a comment API | Threads, cursors, counts, reactions, moderation, live updates | Paginate a nested thread |
+| 25.5 | Design a pub-sub API | Topics, subscriptions, push vs pull, acks, ordering keys, dead letters | Design delivery guarantees |
+| 25.6 | Design a video streaming API | Resumable upload, processing states, HLS/DASH manifests, adaptive bitrate, signed URLs | Design the playback flow |
+| 25.7 | Design a messaging API | Send, sync and receipts; client message ids; WebSocket delivery; end-to-end encryption | Make sending idempotent |
+| 25.8 | Design a maps API | Tiles, geocoding, places, directions, ETAs, per-call billing | Design tile URLs that cache |
+| 25.9 | Design a video conferencing API | Meetings, signalling, WebRTC, SFUs, tokens, webhooks | Design "join a meeting" |
+| 25.10 | Design a code judge API | Asynchronous submissions, sandboxes, verdict delivery, contest spikes | Design the submission lifecycle |
+| 25.11 | Design a payments API | Payments as state machines, idempotency, webhooks, the card network, versioning | Trace a card payment end to end |
+| 25.12 | Design a social feed API | Posts, timelines, cursors, fan-out, streaming, pricing and limits | Design the home timeline endpoint |
+| 25.13 | Design a ride-hailing API | Quotes, ride state machine, driver location streams, matching | Design a ride request |
+| 25.14 | Design a price tracker API | Consuming someone else's API, quotas, schedules, alerts, migrations | Plan for an upstream API change |
+| 25.15 | Design a game backend API | Sessions, matchmaking, real-time state, leaderboards, purchases | Design matchmaking tickets |
+| 25.16 | When APIs fail | Knight Capital, the S3 outage, the Facebook SDK crash and the patterns behind them | Write a mitigation plan |
+| 25.17 | Lab: design APIs end to end | Search, uploads and payments as checked labs | Design, measure and defend three APIs |
 
 ---
 
-## Part 4 – AI system design
+## Part 4 – Under the hood
 
-### Module 26 – AI systems foundations
+### Module 26 – Classic algorithms in action
 | # | Lesson | Learn | Try |
 |---|--------|-------|-----|
-| 26.1 | When a model becomes a component | Probabilistic outputs, slow and expensive calls, what changes in architecture | List what changes when you add an LLM to an app |
-| 26.2 | LLMs for system designers | Tokens, context windows, prefill vs decode, TTFT and tokens/s, pricing by token | Estimate cost and latency of one chat turn |
-| 26.3 | Serving models on GPUs | GPU memory math, the KV cache, continuous batching, PagedAttention, quantisation | Fit a 70B model and its KV cache on GPUs |
-| 26.4 | Model gateways and routing | One API for many providers, fallbacks, routing and cascades, token-based rate limits | Route easy prompts to a small model |
-| 26.5 | Caching for LLMs | Exact caches, prompt/prefix caching, semantic caches and their wrong answers | Pick a similarity threshold |
-| 26.6 | Streaming and perceived latency | Token streaming over SSE, speculative decoding, latency budgets for AI features | Make a 6-second answer feel instant |
-| 26.7 | Self-hosting vs model APIs | Cost per million tokens, utilisation, data control, the break-even point | Find the break-even for your traffic |
+| 26.1 | Consistent and rendezvous hashing | Spreading keys with minimal movement | Simulate adding/removing nodes |
+| 26.2 | Bloom filters | Fast "definitely not" checks, false-positive rate | Tune size vs error rate |
+| 26.3 | Count-min sketch | Approximate frequency counts | Find heavy hitters |
+| 26.4 | HyperLogLog | Counting unique items in tiny memory | Count unique visitors |
+| 26.5 | Merkle trees | Detecting differences between replicas | Sync two replicas |
+| 26.6 | Gossip protocols | Spreading state without a centre | Watch a rumour spread |
+| 26.7 | Raft | Elections and log replication | Break a leader, watch recovery |
+| 26.8 | LSM trees vs B-trees | Write- vs read-optimised storage engines | Compare write amplification |
+| 26.9 | Geohash and quadtrees | Finding nearby things | Find drivers near a rider |
+| 26.10 | Rate limiter algorithms | Token bucket internals | Simulate bursts |
+| 26.11 | Snowflake IDs | Time-ordered unique IDs | Decode an ID |
+| 26.12 | Skip lists | Sorted sets (Redis ZSET) | Build a leaderboard |
+| 26.13 | Write-ahead logs | Durability and crash recovery | Recover after a crash |
 
-### Module 27 – Retrieval and RAG
+### Module 27 – Networking under the hood
 | # | Lesson | Learn | Try |
 |---|--------|-------|-----|
-| 27.1 | Why retrieval-augmented generation | Grounding, freshness, citations; RAG vs fine-tuning vs long context | Choose between RAG and fine-tuning for three products |
-| 27.2 | Embeddings | Vectors for meaning, similarity, dimensions, choosing and versioning a model | Explain why "refund" finds "money back" |
-| 27.3 | Vector indexes | Exact vs approximate search, HNSW, IVF, product quantisation, recall vs latency | Tune an index for 100M vectors |
-| 27.4 | Ingestion and chunking | Pipelines, chunk size and overlap, metadata, permissions, keeping embeddings fresh | Design ingestion for a help centre |
-| 27.5 | Hybrid search and reranking | BM25 plus vectors, reciprocal rank fusion, cross-encoder rerankers | Fix a query that misses an exact product code |
-| 27.6 | Evaluating RAG | Recall@k, MRR, groundedness, answer quality, golden sets | Build a 50-question eval set |
-| 27.7 | Beyond basic RAG | Query rewriting, agentic retrieval, GraphRAG, long context vs retrieval | Pick an approach for multi-hop questions |
+| 27.1 | DNS in depth | Resolvers, the root/TLD/authoritative chain, TTLs, negative caching, why DNS outages are global | Trace a lookup and pick TTLs for a failover record |
+| 27.2 | TCP and congestion control | Handshakes, windows, slow start, Cubic vs BBR, head-of-line blocking | Explain why the first request on a new connection is slow |
+| 27.3 | TLS and certificates | The TLS 1.3 handshake, session resumption, certificate chains, expiry outages | Plan certificate rotation for 500 domains |
+| 27.4 | HTTP/2, HTTP/3 and QUIC | Multiplexing, header compression, QUIC over UDP, connection migration | Choose a protocol for a mobile app |
+| 27.5 | BGP and anycast | Autonomous systems, route announcements, anycast for CDNs and DNS, route leaks | Explain how one BGP change took Facebook offline |
+| 27.6 | Inside a load balancer | L4 vs L7 internals, Maglev-style consistent hashing, connection tracking, draining | Design a load balancer tier for 10M connections |
 
-### Module 28 – Agents
+### Module 28 – Database internals
 | # | Lesson | Learn | Try |
 |---|--------|-------|-----|
-| 28.1 | Workflows vs agents | Prompt chaining, routing, parallelisation, orchestrator-workers, evaluator-optimizer | Decide if a task needs an agent at all |
-| 28.2 | The agent loop and tool calling | Think, act, observe; tool schemas; structured outputs; stopping conditions | Trace one agent run step by step |
-| 28.3 | MCP: connecting tools and data | The Model Context Protocol: hosts, clients, servers, tools, resources, transports | Expose a database to an agent safely |
-| 28.4 | Memory and context engineering | Short-term context, long-term memory, summarisation, what to keep in the window | Design memory for a personal assistant |
-| 28.5 | Multi-agent systems | Orchestrator and subagents, parallel research, handoffs, agent-to-agent protocols | Split a research task across agents |
-| 28.6 | Durable execution for agents | Checkpoints, idempotent tools, retries, human approval steps, long-running tasks | Resume an agent after a crash |
-| 28.7 | Sandboxing and permissions | Least privilege, approval gates, isolated execution, audit logs | Decide which tools need a human |
-| 28.8 | Agent reliability math | Compounding step errors, verification, step limits, cost per task | Make a 10-step agent 95% reliable |
+| 28.1 | How a query runs | Parser, planner, cost model, executor, statistics, plan caching | Read an EXPLAIN plan and spot the mistake |
+| 28.2 | MVCC and isolation under the hood | Row versions, snapshots, visibility rules, write skew | Show why two doctors both went off call |
+| 28.3 | Locks, latches and deadlocks | Row and table locks, lock queues, deadlock detection, lock timeouts | Untangle a deadlock from a log |
+| 28.4 | Replication internals | WAL shipping, logical replication, binlogs, replication slots | Pick a replication method for a zero-downtime migration |
+| 28.5 | Vacuum, compaction and bloat | Dead tuples, autovacuum, transaction ID wraparound, LSM compaction | Diagnose a table that keeps growing |
+| 28.6 | Inside distributed SQL | Ranges, Raft per range, TrueTime and hybrid clocks, distributed transactions | Follow a write through Spanner or CockroachDB |
 
-### Module 29 – AI in production
+### Module 29 – Storage, search and data at scale
 | # | Lesson | Learn | Try |
 |---|--------|-------|-----|
-| 29.1 | Evals | Offline and online evals, golden sets, LLM-as-judge, regression gates | Write an eval for a support bot |
-| 29.2 | Observability for LLM apps | Traces of prompts and tool calls, token accounting, quality signals, OpenTelemetry | Find why answers got worse last week |
-| 29.3 | Guardrails | Input and output checks, PII redaction, policy filters, structured validation | Add guardrails without doubling latency |
-| 29.4 | Prompt injection and AI security | Direct and indirect injection, data exfiltration, the OWASP LLM Top 10 | Find the injection path in a design |
-| 29.5 | Cost engineering | Tokens per task, caching, routing, batch APIs, shorter prompts | Cut the bill of an AI feature by 70% |
-| 29.6 | Reliability for AI features | Timeouts, provider failover, rate limits, degraded modes when the model is down | Keep an AI feature up when a provider fails |
-| 29.7 | Data, privacy and governance | Training on user data, retention, data residency, audit and model cards | Write a data policy for an AI feature |
+| 29.1 | Object storage | How S3-style stores reach 11 nines: erasure coding, metadata, consistency | Estimate storage overhead of 3× replication vs 8+4 erasure coding |
+| 29.2 | Inverted indexes and search ranking | Tokenising, posting lists, BM25, sharding a search index | Index three documents by hand |
+| 29.3 | Column stores and OLAP | Row vs column layout, compression, vectorised execution, data warehouses | Choose a store for a dashboard over 10B events |
+| 29.4 | Time-series data | Downsampling, retention, high cardinality, Prometheus-style storage | Design metrics storage for 1M series |
+| 29.5 | Distributed file systems | GFS/HDFS/Colossus: chunk servers, masters, replication | Survive a disk failure every hour |
+| 29.6 | From MapReduce to Spark and dataflow | Batch jobs, shuffles, DAGs, exactly-once in streaming engines | Turn a nightly batch job into a streaming one |
 
-### Module 30 – AI case studies
+### Module 30 – Real-world architectures
 | # | Lesson | Learn | Try |
 |---|--------|-------|-----|
-| 30.1 | Chat at ChatGPT scale | GPU capacity planning, queueing, rate limits and tiers, what its outages taught | Plan GPUs for a product launch |
-| 30.2 | Code assistants | Completion latency budgets, context from the codebase, indexing repos, agents that edit code | Design repo indexing for a monorepo |
-| 30.3 | An AI answer engine | Search plus LLM: query planning, crawling, ranking, citations | Design an answer engine with citations |
-| 30.4 | A customer support agent | Retrieval over help articles, tool access, escalation to humans, measuring resolution | Decide what the agent may do alone |
-| 30.5 | Recommendation systems | Candidate generation, ranking, two-tower models, feature stores, feedback loops | Design a "for you" feed |
-| 30.6 | ML platforms and fraud detection | Feature stores, online vs offline features, training-serving skew, real-time scoring | Score payments in 50 ms |
-| 30.7 | When AI goes wrong | Real incidents: a chatbot's promise held up in court, an agent that deleted production data, prompt leaks | Add the missing safeguards |
-| 30.8 | Lab: an AI support assistant | Requirements to architecture for a RAG + agent product | Design, estimate, and load-test it |
+| 30.1 | Netflix: streaming to hundreds of millions | Open Connect appliances inside ISPs, the control plane on AWS, chaos engineering, regional evacuation | Estimate peak egress for a global premiere |
+| 30.2 | Disney+ Hotstar: tens of millions watching one match | Pre-scaling ahead of a spike, ladder-based autoscaling, panic mode and graceful degradation | Plan capacity for a 50M-viewer final |
+| 30.3 | WhatsApp: millions of connections per server | Erlang/BEAM, one process per connection, store-and-forward, tiny teams | Size a chat fleet for 2B users |
+| 30.4 | Discord: trillions of messages | Cassandra to ScyllaDB, hot partitions, Rust data services with request coalescing | Fix a hot channel partition |
+| 30.5 | Uber: real-time dispatch | H3 hexagons, supply/demand matching, geo-sharding, surge | Match riders to drivers in one city |
+| 30.6 | Instagram: scaling Postgres | Sharding by user, logical shards, ID generation, Cassandra for feeds | Choose a shard key for likes |
+| 30.7 | Twitter/X: building timelines | Fan-out on write, the celebrity problem, hybrid fan-out, Redis timelines | Decide who gets fan-out on read |
+| 30.8 | YouTube: video at planetary scale | Upload pipeline, transcoding ladders, Vitess for MySQL sharding, edge caching | Design the upload-to-watch path |
+| 30.9 | Shopify: surviving flash sales | Pods (cells), load shedding, the checkout queue, BFCM game days | Keep checkout up during a sneaker drop |
+| 30.10 | Stripe: payments that never double-charge | Idempotency keys, the ledger, retries with backoff, API versioning | Make a charge endpoint safe to retry |
+| 30.11 | Amazon DynamoDB: predictable at any scale | Partitions, adaptive capacity, Prime Day peaks, cell-based design | Spread a hot partition key |
+| 30.12 | Figma: real-time multiplayer | A server-authoritative sync engine, conflict resolution per property, sharding Postgres | Merge two people editing one shape |
+
+### Module 31 – Postmortems: why big systems fail
+| # | Lesson | Learn | Try |
+|---|--------|-------|-----|
+| 31.1 | How to read a postmortem | Blameless culture, timelines, trigger vs root cause vs contributing factors | Write the timeline for an outage you saw |
+| 31.2 | Cloudflare, Nov 2025: a file that doubled | A generated feature file grew past a hard limit and crashed the core proxy worldwide | Add a guard rail to a config pipeline |
+| 31.3 | Cloudflare, Jul 2019: one regular expression | Catastrophic backtracking pushed every CPU to 100%; global WAF rules without staging | Spot a dangerous regex |
+| 31.4 | CrowdStrike, Jul 2024: 8.5 million blue screens | A content update read out of bounds in a kernel driver; no staged rollout | Design a staged rollout for agent updates |
+| 31.5 | AWS us-east-1, Oct 2025: a DNS race | A race in DynamoDB's DNS automation emptied an endpoint record; the dependency cascade that followed | Map the dependencies of one region |
+| 31.6 | AWS S3, Feb 2017: one mistyped command | Removing too many servers took down S3's index; slow cold restarts; the status page hosted on S3 | Add safety limits to an ops tool |
+| 31.7 | Facebook, Oct 2021: the internet forgot Facebook | A backbone command withdrew BGP routes; DNS servers withdrew themselves; badges stopped working | Plan out-of-band access |
+| 31.8 | GitLab, Jan 2017: deleting the database | rm -rf on the wrong host and five backup methods that didn't work | Test a restore, not a backup |
+| 31.9 | GitHub, Oct 2018: 43 seconds, 24 hours | A brief network partition, cross-coast failover and divergent writes | Decide between availability and consistency |
+| 31.10 | Roblox, Oct 2021: 73 hours down | Consul under a new streaming feature, BoltDB freelist growth, circular dependencies | Remove a circular dependency |
+| 31.11 | Fastly, Jun 2021: one customer's config | A latent bug triggered by a valid config took down 85% of the network in a minute | Shrink a blast radius |
+| 31.12 | Slack, Jan 2021: the first Monday back | Traffic after the holidays, AWS Transit Gateway scaling, autoscaling that made it worse | Pre-scale for a known spike |
+| 31.13 | Google Cloud, Jun 2025: a null pointer everywhere | A policy with blank fields crashed Service Control in every region; no feature flag; retry herds | Gate a new code path behind a flag |
+| 31.14 | Knight Capital, 2012: $440M in 45 minutes | A partial deploy reused an old flag and woke dead code | Design a safe deploy checklist |
+| 31.15 | Patterns behind the outages | Global config pushes, missing staged rollouts, retry storms, hidden dependencies, cells and blast radius | Score your system against the patterns |
+
+### Module 32 – The interview playbook
+| # | Lesson | Learn | Try |
+|---|--------|-------|-----|
+| 32.1 | How design interviews work | What interviewers score, a 45-minute plan, driving the conversation | Run a mock interview on yourself |
+| 32.2 | Design a URL shortener | Key generation, redirects, caching, analytics | Handle 100k redirects/s |
+| 32.3 | Design a rate limiter | Algorithms, where it runs, distributed counters, failure modes | Limit 1,000 API keys across 50 servers |
+| 32.4 | Design a news feed | Fan-out on write vs read, ranking, celebrities | Build a feed for 300M users |
+| 32.5 | Design a chat app | Connections, delivery receipts, ordering, group fan-out, offline sync | Deliver messages with ticks |
+| 32.6 | Design a notification system | Channels, templates, priorities, dedupe, user preferences | Send 10M pushes in 5 minutes |
+| 32.7 | Design search autocomplete | Tries, top-k per prefix, caching, freshness | Answer each keystroke in 50 ms |
+| 32.8 | Design a web crawler | Frontier, politeness, dedupe with Bloom filters, scale | Crawl 1B pages a month |
+| 32.9 | Design a video platform | Upload, transcode, storage, CDN, recommendations | Serve 1M concurrent viewers |
+| 32.10 | Design a ride-hailing app | Location updates, geo indexing, matching, trip state | Match in under a second |
+| 32.11 | Design a ticket booking system | Seat holds, contention, queues for big on-sales, payment | Sell 50k seats in a minute fairly |
+| 32.12 | Design file sync (Dropbox) | Chunking, dedupe, metadata service, sync conflicts | Sync a 2 GB file edit cheaply |
+| 32.13 | Design a collaborative editor | OT vs CRDTs, presence, snapshots | Merge concurrent edits |
+| 32.14 | Design a payment system | Ledgers, idempotency, reconciliation, provider failures | Never double-charge |
+| 32.15 | Design a leaderboard | Sorted sets, sharded top-k, real-time vs periodic | Rank 50M players |
+| 32.16 | Design a distributed cache | Partitioning, replication, eviction, hot keys | Build a 10 TB cache cluster |
+| 32.17 | Design metrics and monitoring | Ingestion, time-series storage, alerting, cardinality | Alert within 30 s on 1M series |
+
+---
+
+## Part 5 – AI system design
+
+### Module 33 – AI systems foundations
+| # | Lesson | Learn | Try |
+|---|--------|-------|-----|
+| 33.1 | When a model becomes a component | Probabilistic outputs, slow and expensive calls, what changes in architecture | List what changes when you add an LLM to an app |
+| 33.2 | LLMs for system designers | Tokens, context windows, prefill vs decode, TTFT and tokens/s, pricing by token | Estimate cost and latency of one chat turn |
+| 33.3 | Serving models on GPUs | GPU memory math, the KV cache, continuous batching, PagedAttention, quantisation | Fit a 70B model and its KV cache on GPUs |
+| 33.4 | Model gateways and routing | One API for many providers, fallbacks, routing and cascades, token-based rate limits | Route easy prompts to a small model |
+| 33.5 | Caching for LLMs | Exact caches, prompt/prefix caching, semantic caches and their wrong answers | Pick a similarity threshold |
+| 33.6 | Streaming and perceived latency | Token streaming over SSE, speculative decoding, latency budgets for AI features | Make a 6-second answer feel instant |
+| 33.7 | Self-hosting vs model APIs | Cost per million tokens, utilisation, data control, the break-even point | Find the break-even for your traffic |
+
+### Module 34 – Retrieval and RAG
+| # | Lesson | Learn | Try |
+|---|--------|-------|-----|
+| 34.1 | Why retrieval-augmented generation | Grounding, freshness, citations; RAG vs fine-tuning vs long context | Choose between RAG and fine-tuning for three products |
+| 34.2 | Embeddings | Vectors for meaning, similarity, dimensions, choosing and versioning a model | Explain why "refund" finds "money back" |
+| 34.3 | Vector indexes | Exact vs approximate search, HNSW, IVF, product quantisation, recall vs latency | Tune an index for 100M vectors |
+| 34.4 | Ingestion and chunking | Pipelines, chunk size and overlap, metadata, permissions, keeping embeddings fresh | Design ingestion for a help centre |
+| 34.5 | Hybrid search and reranking | BM25 plus vectors, reciprocal rank fusion, cross-encoder rerankers | Fix a query that misses an exact product code |
+| 34.6 | Evaluating RAG | Recall@k, MRR, groundedness, answer quality, golden sets | Build a 50-question eval set |
+| 34.7 | Beyond basic RAG | Query rewriting, agentic retrieval, GraphRAG, long context vs retrieval | Pick an approach for multi-hop questions |
+
+### Module 35 – Agents
+| # | Lesson | Learn | Try |
+|---|--------|-------|-----|
+| 35.1 | Workflows vs agents | Prompt chaining, routing, parallelisation, orchestrator-workers, evaluator-optimizer | Decide if a task needs an agent at all |
+| 35.2 | The agent loop and tool calling | Think, act, observe; tool schemas; structured outputs; stopping conditions | Trace one agent run step by step |
+| 35.3 | MCP: connecting tools and data | The Model Context Protocol: hosts, clients, servers, tools, resources, transports | Expose a database to an agent safely |
+| 35.4 | Memory and context engineering | Short-term context, long-term memory, summarisation, what to keep in the window | Design memory for a personal assistant |
+| 35.5 | Multi-agent systems | Orchestrator and subagents, parallel research, handoffs, agent-to-agent protocols | Split a research task across agents |
+| 35.6 | Durable execution for agents | Checkpoints, idempotent tools, retries, human approval steps, long-running tasks | Resume an agent after a crash |
+| 35.7 | Sandboxing and permissions | Least privilege, approval gates, isolated execution, audit logs | Decide which tools need a human |
+| 35.8 | Agent reliability math | Compounding step errors, verification, step limits, cost per task | Make a 10-step agent 95% reliable |
+
+### Module 36 – AI in production
+| # | Lesson | Learn | Try |
+|---|--------|-------|-----|
+| 36.1 | Evals | Offline and online evals, golden sets, LLM-as-judge, regression gates | Write an eval for a support bot |
+| 36.2 | Observability for LLM apps | Traces of prompts and tool calls, token accounting, quality signals, OpenTelemetry | Find why answers got worse last week |
+| 36.3 | Guardrails | Input and output checks, PII redaction, policy filters, structured validation | Add guardrails without doubling latency |
+| 36.4 | Prompt injection and AI security | Direct and indirect injection, data exfiltration, the OWASP LLM Top 10 | Find the injection path in a design |
+| 36.5 | Cost engineering | Tokens per task, caching, routing, batch APIs, shorter prompts | Cut the bill of an AI feature by 70% |
+| 36.6 | Reliability for AI features | Timeouts, provider failover, rate limits, degraded modes when the model is down | Keep an AI feature up when a provider fails |
+| 36.7 | Data, privacy and governance | Training on user data, retention, data residency, audit and model cards | Write a data policy for an AI feature |
+
+### Module 37 – AI case studies
+| # | Lesson | Learn | Try |
+|---|--------|-------|-----|
+| 37.1 | Chat at ChatGPT scale | GPU capacity planning, queueing, rate limits and tiers, what its outages taught | Plan GPUs for a product launch |
+| 37.2 | Code assistants | Completion latency budgets, context from the codebase, indexing repos, agents that edit code | Design repo indexing for a monorepo |
+| 37.3 | An AI answer engine | Search plus LLM: query planning, crawling, ranking, citations | Design an answer engine with citations |
+| 37.4 | A customer support agent | Retrieval over help articles, tool access, escalation to humans, measuring resolution | Decide what the agent may do alone |
+| 37.5 | Recommendation systems | Candidate generation, ranking, two-tower models, feature stores, feedback loops | Design a "for you" feed |
+| 37.6 | ML platforms and fraud detection | Feature stores, online vs offline features, training-serving skew, real-time scoring | Score payments in 50 ms |
+| 37.7 | When AI goes wrong | Real incidents: a chatbot's promise held up in court, an agent that deleted production data, prompt leaks | Add the missing safeguards |
+| 37.8 | Lab: an AI support assistant | Requirements to architecture for a RAG + agent product | Design, estimate, and load-test it |

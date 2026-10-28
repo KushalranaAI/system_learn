@@ -68,8 +68,8 @@ export function runLsmBtree(p: LsmP): LsmR {
 export const lsmBtree: SimDef<LsmP, LsmR> = {
   id: "lsm-btree",
   title: "LSM tree vs B-tree",
-  module: 19,
-  lessons: ["19.8"],
+  module: 26,
+  lessons: ["26.8"],
   blurb: "Insert real keys into a B-tree with a buffer pool and into an LSM tree with flushes and compactions. Measure how many bytes each writes per byte of data, and how many disk reads a lookup costs.",
   params: [
     { key: "keys", label: "Keys inserted", type: "number", min: 10000, max: 1000000, log: true },
@@ -149,8 +149,8 @@ const measuredFsync = MEASURED?.raw?.fsync?.p50 ? Math.max(0.05, Math.round(MEAS
 export const wal: SimDef<WalP, WalR> = {
   id: "wal",
   title: "Write-ahead log and group commit",
-  module: 19,
-  lessons: ["19.13", "5.5"],
+  module: 26,
+  lessons: ["26.13", "5.5"],
   blurb: "Clients commit transactions to a write-ahead log on disk. fsync each commit alone, batch many commits into one fsync (group commit), or skip fsync - and see throughput, latency and what a crash would lose.",
   params: [
     { key: "clients", label: "Concurrent clients", type: "number", min: 1, max: 256, log: true },

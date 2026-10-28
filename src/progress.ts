@@ -18,6 +18,8 @@ export interface Progress {
   labs: Record<string, { step: number; done: number[]; graph?: Graph; graphStep?: number; api?: ApiRow[] }>;
   sandbox?: { graph: Graph; traffic: Traffic };
   scenarios?: Scenario[];
+  /** curriculum numbering the lesson ids were saved under (missing = 1) */
+  pathVersion?: number;
 }
 
 export interface ApiRow {
@@ -28,14 +30,30 @@ export interface ApiRow {
 
 const KEY = "system-learn:progress:v1";
 
+/** Version 2 inserted Part 3 (API design) as modules 19-25, so old modules 19-30 became 26-37. */
+export const PATH_VERSION = 2;
+
+export function migrateProgress(p: Progress): Progress {
+  if ((p.pathVersion ?? 1) < 2) {
+    const lessons: Record<string, boolean> = {};
+    for (const [id, done] of Object.entries(p.lessons ?? {})) {
+      const m = id.match(/^(\d+)\.(\d+)$/);
+      const mod = m ? +m[1] : 0;
+      lessons[m && mod >= 19 && mod <= 30 ? `${mod + 7}.${m[2]}` : id] = done;
+    }
+    p = { ...p, lessons };
+  }
+  return { ...p, pathVersion: PATH_VERSION };
+}
+
 export function loadProgress(): Progress {
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) return { lessons: {}, labs: {}, ...JSON.parse(raw) };
+    if (raw) return migrateProgress({ lessons: {}, labs: {}, ...JSON.parse(raw) });
   } catch {
     /* storage unavailable - start fresh */
   }
-  return { lessons: {}, labs: {} };
+  return { lessons: {}, labs: {}, pathVersion: PATH_VERSION };
 }
 
 export function saveProgress(p: Progress) {

@@ -25,9 +25,10 @@ import { whosOnline } from "./whos-online";
 import { paymentsLedger } from "./payments-ledger";
 import { rideDispatch } from "./ride-dispatch";
 import { AI_LABS } from "./ai-labs";
+import { API_LABS } from "./api-labs";
 import type { Lab } from "./types";
 
-export const LABS: Lab[] = [pastebin, productCatalogue, photoFeed, dinnerRush, blogPlatform, liveScores, uploadPipeline, stopAScraper, tripHistory, linkShortener, splitTheShop, outageDetective, consistencyChoices, keyValueStore, orderEvents, placeAnOrder, liveAnalytics, goGlobal, algorithmsInAction, chatDelivery, whosOnline, videoPlatform, ticketBooking, rankedFeed, paymentsLedger, rideDispatch, ...AI_LABS];
+export const LABS: Lab[] = [pastebin, productCatalogue, photoFeed, dinnerRush, blogPlatform, liveScores, uploadPipeline, stopAScraper, tripHistory, linkShortener, splitTheShop, outageDetective, consistencyChoices, keyValueStore, orderEvents, placeAnOrder, liveAnalytics, goGlobal, ...API_LABS, algorithmsInAction, chatDelivery, whosOnline, videoPlatform, ticketBooking, rankedFeed, paymentsLedger, rideDispatch, ...AI_LABS];
 
 /** Labs on the roadmap - contributions welcome (see docs/writing-labs.md). */
 export const UPCOMING: { title: string; product: string; tags: string[] }[] = [];

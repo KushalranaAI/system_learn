@@ -71,8 +71,8 @@ export function runRagRetrieval(p: RagP): RagR {
 export const ragRetrieval: SimDef<RagP, RagR> = {
   id: "rag-retrieval",
   title: "RAG retrieval: chunks, top-k, hybrid, rerank",
-  module: 27,
-  lessons: ["27.4", "27.6", "27.5"],
+  module: 34,
+  lessons: ["34.4", "34.6", "34.5"],
   blurb: "3,000 help-centre questions, each answered by one passage. Tune chunking and retrieval and watch recall@k, the tokens you stuff into the prompt, latency and cost per query.",
   params: [
     { key: "chunkTokens", label: "Chunk size", type: "number", min: 64, max: 4000, log: true, unit: "tokens" },
@@ -153,8 +153,8 @@ export function runAnnIndex(p: AnnP): AnnR {
 export const annIndex: SimDef<AnnP, AnnR> = {
   id: "ann-index",
   title: "Vector search: exact vs HNSW",
-  module: 27,
-  lessons: ["27.3"],
+  module: 34,
+  lessons: ["34.3"],
   blurb: "Exact nearest-neighbour search compares the query with every vector. HNSW walks a graph instead: far faster, slightly less accurate, and it needs extra memory for the links. Tune M and efSearch.",
   params: [
     { key: "vectors", label: "Vectors in the index", type: "number", min: 10000, max: 1_000_000_000, log: true },

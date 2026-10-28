@@ -41,8 +41,8 @@ export function runGossip(p: GossipP): GossipR {
 export const gossip: SimDef<GossipP, GossipR> = {
   id: "gossip",
   title: "Gossip protocol",
-  module: 19,
-  lessons: ["19.6", "14.6"],
+  module: 26,
+  lessons: ["26.6", "14.6"],
   blurb: "One node learns a fact. Every round, each node talks to a few random peers over a lossy network. How many rounds until all of them know?",
   params: [
     { key: "nodes", label: "Nodes", type: "number", min: 10, max: 20000, log: true },
@@ -145,8 +145,8 @@ export function runRaft(p: RaftP): RaftR {
 export const raft: SimDef<RaftP, RaftR> = {
   id: "raft",
   title: "Raft leader election",
-  module: 19,
-  lessons: ["19.7", "13.3", "5.4"],
+  module: 26,
+  lessons: ["26.7", "13.3", "5.4"],
   blurb: "The leader of a Raft cluster dies. Run 400 elections with real timers, vote requests and network delays, and see how randomised timeouts prevent split votes.",
   params: [
     { key: "nodes", label: "Cluster size", type: "number", min: 3, max: 9, step: 2 },
