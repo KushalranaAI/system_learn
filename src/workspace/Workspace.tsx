@@ -7,6 +7,7 @@ import { explainDesign, nodeTitle, type NodeKind } from "../engine";
 import { useChatSource } from "../chat/store";
 import { useWorkspace } from "../state/workspace";
 import { Board } from "./Board";
+import { CoachProvider } from "./coach";
 import { Hud } from "./Hud";
 import { Inspector } from "./Inspector";
 import { GuidePanel } from "./GuidePanel";
@@ -135,9 +136,11 @@ export interface WorkspaceProps {
   showTimeline?: boolean;
   /** what the left panel holds, for the collapse button's label */
   leftLabel?: string;
+  /** show the build → wire → load → break path in the guide (the sandbox; labs have their own steps) */
+  tour?: boolean;
 }
 
-export function Workspace({ left, palette, trafficLocked, showTimeline = true, leftLabel = "panel" }: WorkspaceProps) {
+export function Workspace({ left, palette, trafficLocked, showTimeline = true, leftLabel = "panel", tour = false }: WorkspaceProps) {
   const presenter = useWorkspace((s) => s.presenter);
   // lab instructions hold the Run button, so they start open even on narrow screens (as an overlay)
   const [leftOpen, setLeftOpen] = useState(() => leftLabel === "instructions" || typeof window === "undefined" || window.innerWidth >= 1100);
@@ -149,6 +152,7 @@ export function Workspace({ left, palette, trafficLocked, showTimeline = true, l
   return (
     <ReactFlowProvider>
       <SimProvider>
+        <CoachProvider palette={palette} tour={tour} trafficLocked={trafficLocked}>
         <WorkspaceChatSource />
         <div
           className={`ws${presenter ? " presenter" : ""}${showLeft ? "" : " no-left"}${showRight ? "" : " no-right"}`}
@@ -180,6 +184,7 @@ export function Workspace({ left, palette, trafficLocked, showTimeline = true, l
             </aside>
           )}
         </div>
+        </CoachProvider>
       </SimProvider>
     </ReactFlowProvider>
   );

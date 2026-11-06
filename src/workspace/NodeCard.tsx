@@ -21,6 +21,7 @@ import {
 } from "../engine";
 import { useWorkspace } from "../state/workspace";
 import { KindIcon } from "../ui/icons";
+import { useCoach } from "./coach";
 import { useSim, utilColor } from "./sim";
 
 export function capacityOf(n: SimNode): { cap: number; unit: string } {
@@ -92,7 +93,9 @@ function NodeCardImpl({ id, selected }: NodeProps) {
   const detailed = useWorkspace((s) => s.detailed);
   const n = nodes.find((x) => x.id === id);
   const sim = useSim();
+  const wireHint = useCoach().coach.step?.wire;
   if (!n) return null;
+  const hint = wireHint?.from === id ? " wire-from" : wireHint?.to === id ? " wire-to" : "";
   const r = sim.nodes[id];
   const spec = KINDS[n.kind];
   const { cap, unit } = capacityOf(n);
@@ -110,7 +113,7 @@ function NodeCardImpl({ id, selected }: NodeProps) {
           : null;
   return (
     <div
-      className={`node${selected ? " selected" : ""}${down ? " down" : ""}${util >= 1 ? " overloaded" : util >= 0.85 ? " hot" : ""}${detailed ? " detailed" : ""}`}
+      className={`node${selected ? " selected" : ""}${down ? " down" : ""}${util >= 1 ? " overloaded" : util >= 0.85 ? " hot" : ""}${detailed ? " detailed" : ""}${hint}`}
       style={{ ["--kind" as string]: spec.color }}
     >
       {!isClient && <Handle type="target" position={Position.Left} />}
@@ -148,6 +151,7 @@ function NodeCardImpl({ id, selected }: NodeProps) {
         </>
       )}
       {CAN_SEND_TO[n.kind].length > 0 && <Handle type="source" position={Position.Right} />}
+      {hint === " wire-from" && <span className="wire-tip" aria-hidden>drag →</span>}
     </div>
   );
 }

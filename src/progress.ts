@@ -18,6 +18,8 @@ export interface Progress {
   labs: Record<string, { step: number; done: number[]; graph?: Graph; graphStep?: number; api?: ApiRow[] }>;
   sandbox?: { graph: Graph; traffic: Traffic };
   scenarios?: Scenario[];
+  /** sandbox guidance: milestones reached, and which "Try this" steps are ticked per starting point (by title) */
+  guide?: { traffic?: boolean; ran?: boolean; tried?: Record<string, number[]> };
   /** curriculum numbering the lesson ids were saved under (missing = 1) */
   pathVersion?: number;
 }
