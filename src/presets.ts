@@ -89,7 +89,13 @@ export const PRESETS: Preset[] = [
     id: "scaled",
     title: "Load balanced",
     blurb: "Three API servers behind a load balancer. Kill one with and without health checks.",
-    tryThis: ["Run \"Kill: API server 1\" - a third of requests fail. Why?", "Turn on health checks on the load balancer and run it again.", "Push traffic up: is there still room for one server to die (N+1)?"],
+    tryThis: [
+      "Run \"Kill: API server 1\" - a third of requests fail. Why?",
+      "Turn on health checks on the load balancer and run it again.",
+      "Push traffic up: is there still room for one server to die (N+1)?",
+      "Make API server 3 a smaller machine, then select the load balancer: round robin overloads it, weighted or least connections doesn't.",
+      "Switch to least connections, turn health checks off and kill a server: the dead one attracts even more traffic.",
+    ],
     graph: build({
       nodes: [["client", "client"], ["lb", "lb"], ["api1", "server", { size: "m" }], ["api2", "server", { size: "m" }], ["api3", "server", { size: "m" }], ["db", "db", { size: "l" }]],
       wires: "client>lb, lb>api1, lb>api2, lb>api3, api1>db, api2>db, api3>db",
