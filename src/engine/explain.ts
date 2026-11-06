@@ -1,4 +1,5 @@
 import { KINDS, LLM_MODELS, agentEffectiveSteps, dbSize, dbSizes, llmModel, nodeTitle, serverSizes } from "./catalog";
+import { fmtBudget, fmtPct } from "./replay";
 import { sagaOutcome, SAGA_CAUSES } from "./saga";
 import { fmtRps, simulate } from "./solve";
 import { TIMELINE, summarize, type Incident, type Resilience, type Tick } from "./timeline";
@@ -266,11 +267,11 @@ export function explainTimeline(g: Graph, traffic: Traffic, ticks: Tick[], incid
   story.push(`For ${at} s everything ran normally. At t=${at} s ${what}.`);
   const worstT = ticks.reduce((w, k, i) => (k.res.success / Math.max(1, k.res.legit) < ticks[w].res.success / Math.max(1, ticks[w].res.legit) ? i : w), 0);
   if (s.worstSuccess >= 0.99) story.push(`Users barely noticed: even the worst second had ${pct(s.worstSuccess)} success (p99 peaked at ${s.worstP99} ms).`);
-  else story.push(`Success fell to ${pct(s.worstSuccess)} at t=${ticks[worstT].t} s - ${worstNode(g, ticks[worstT].res)} was the weak point.`);
+  else story.push(`Success fell to ${fmtPct(s.worstSuccess)} at t=${ticks[worstT].t} s - ${killed ? `losing ${name(killed.id)} was the cause` : `${worstNode(g, ticks[worstT].res)} was the weak point`}.`);
   if (resilience.retries && s.worstSuccess < 0.99) story.push(`Clients retried failed requests, adding up to ${pct(Math.max(...ticks.map((k) => k.res.legit)) / Math.max(1, ticks[0].res.legit) - 1)} extra load on top of the problem.`);
   if (s.recoverySeconds === null) story.push("It never recovered within the 60 seconds.");
   else if (s.worstSuccess < 0.99) story.push(`It recovered ${s.recoverySeconds} s after the failure.`);
-  story.push(`Failed requests: ${fmtRps(s.failedTotal)} - ${pct(s.budgetUsed)} of a month's 99.9% error budget.`);
+  story.push(`Failed requests: ${fmtRps(s.failedTotal)} - ${fmtBudget(s.budgetUsed)} of a month's 99.9% error budget.`);
   if (s.finalBacklog > 0) story.push(`${fmtRps(s.finalBacklog)} jobs were still waiting in the queue at the end.`);
   if (s.finalLag > 0) story.push(`Consumers ended ${fmtRps(s.finalLag)} events behind.`);
 
