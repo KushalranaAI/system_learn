@@ -15,6 +15,8 @@ export type NodeKind =
   | "vectordb"
   | "agent";
 
+export type LbAlgo = "round-robin" | "weighted" | "least-conn" | "ip-hash";
+
 export interface NodeConfig {
   /** server / db machine size id */
   size?: string;
@@ -24,6 +26,8 @@ export interface NodeConfig {
   limitPerIp?: number;
   /** lb: skip dead servers */
   healthChecks?: boolean;
+  /** lb: how it picks a server for each request (default round robin) */
+  lbAlgo?: LbAlgo;
   /** db: split the data across N shards (each a full machine of `size`) */
   shards?: number;
   /** db: primary takes writes, replicas only serve reads */

@@ -1028,3 +1028,22 @@ details.privacy summary { color: var(--text-2); }
 .ai-status-card + .env-card, .unlock-card + .ai-status-card { margin-top: 14px; }
 .ai-status-card { margin-bottom: 0; }
 
+/* load balancer: algorithm picker and live split */
+.algo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.algo-opt { font: inherit; font-size: 0.8rem; font-weight: 550; text-align: left; padding: 7px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--text-2); cursor: pointer; transition: border-color 0.15s, background 0.15s, color 0.15s; }
+.algo-opt:hover { border-color: var(--line-2); color: var(--text); }
+.algo-opt.on { border-color: var(--accent-line); background: var(--accent-soft); color: var(--text); }
+.algo-opt:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.algo-card { display: flex; flex-direction: column; gap: 7px; padding: 10px 12px; border-radius: var(--r-sm); background: var(--panel); border: 1px solid var(--line); }
+.algo-card p { margin: 0; font-size: 0.8rem; line-height: 1.5; color: var(--text-2); }
+.algo-card .tag { display: block; margin-bottom: 1px; }
+.algo-card .tag.warn { color: var(--warm); }
+.split-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.split-list li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: "name share util" "bar bar bar"; gap: 3px 10px; align-items: baseline; font-size: 0.8rem; }
+.split-name { grid-area: name; color: var(--text); font-weight: 550; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.split-name small { color: var(--muted); font-weight: 400; }
+.split-share { grid-area: share; font-variant-numeric: tabular-nums; }
+.split-util { grid-area: util; font-size: 0.74rem; font-variant-numeric: tabular-nums; min-width: 62px; text-align: right; }
+.split-util.bad { color: var(--bad); font-weight: 650; }
+.split-bar { grid-area: bar; height: 6px; border-radius: 99px; background: var(--panel-3); overflow: hidden; }
+.split-bar > span { display: block; height: 100%; border-radius: 99px; transition: width 0.4s var(--ease); }

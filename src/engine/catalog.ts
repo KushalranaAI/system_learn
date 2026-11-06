@@ -1,4 +1,4 @@
-import type { NodeConfig, NodeKind, SimNode } from "./types";
+import type { LbAlgo, NodeConfig, NodeKind, SimNode } from "./types";
 
 export interface ServerSize {
   id: string;
@@ -174,7 +174,7 @@ export const KINDS: Record<NodeKind, KindSpec> = {
   },
   lb: {
     kind: "lb", label: "Load balancer", short: "LB", icon: "⚖️", color: "#a78bfa",
-    blurb: "Spreads requests evenly across API servers. With health checks on, it stops sending to dead servers.",
+    blurb: "Spreads requests across API servers. Its algorithm decides who gets what: equal turns, by capacity, fewest open requests, or the same server per user. With health checks on, it stops sending to dead servers.",
     useWhen: "You run more than one API server, or want to survive one dying (turn on health checks).",
     ms: 0.5, cap: 150_000, usd: 25, defaults: { healthChecks: false },
   },
@@ -245,6 +245,49 @@ export const KINDS: Record<NodeKind, KindSpec> = {
     ms: 1, cap: 20_000, usd: 80, defaults: { agentSteps: 4, stepLimit: false },
   },
 };
+
+/** IP hash: the busiest server gets this much more than its fair share (big offices, heavy users). */
+export const IP_HASH_SKEW = 1.3;
+/** Least connections without health checks: a crashed server fails fast, looks idle, and draws this many shares. */
+export const BLACK_HOLE_PULL = 2;
+
+export interface LbAlgoSpec {
+  id: LbAlgo;
+  label: string;
+  short: string;
+  how: string;
+  goodFor: string;
+  watchOut: string;
+}
+
+/** Load-balancing algorithms, as the simulator models them. */
+export const LB_ALGOS: LbAlgoSpec[] = [
+  {
+    id: "round-robin", label: "Round robin", short: "round robin",
+    how: "Takes turns: server 1, 2, 3, 1, 2, 3... Every server gets the same share.",
+    goodFor: "Identical servers and similar requests. The simplest choice.",
+    watchOut: "It ignores machine size: in a mixed fleet the smallest server overloads first.",
+  },
+  {
+    id: "weighted", label: "Weighted round robin", short: "weighted",
+    how: "Takes turns in proportion to each server's capacity: a server twice as big gets twice the requests.",
+    goodFor: "Mixed machine sizes, or slowly shifting traffic onto a new version (canary).",
+    watchOut: "Weights are set by hand: if they're out of date, the split is wrong.",
+  },
+  {
+    id: "least-conn", label: "Least connections", short: "least connections",
+    how: "Sends each request to the server with the fewest requests in progress, so faster and bigger servers take more.",
+    goodFor: "Requests of very different cost (uploads, reports), or mixed machines.",
+    watchOut: "Without health checks, a crashed server fails requests instantly, always looks idle, and attracts even more traffic (a black hole).",
+  },
+  {
+    id: "ip-hash", label: "IP hash (sticky)", short: "IP hash",
+    how: "Hashes the user's IP to pick a server, so the same user always lands on the same server.",
+    goodFor: "Session data or a local cache kept on the server (sticky sessions).",
+    watchOut: "Uneven: big offices and heavy users pile onto one server (here about 30% busier). If that server dies, its users lose their session.",
+  },
+];
+export const lbAlgo = (id?: LbAlgo) => LB_ALGOS.find((a) => a.id === id) ?? LB_ALGOS[0];
 
 export const PALETTE: NodeKind[] = ["client", "cdn", "limiter", "lb", "server", "cache", "db", "queue", "worker", "kafka", "consumer", "saga", "llm", "vectordb", "agent"];
 

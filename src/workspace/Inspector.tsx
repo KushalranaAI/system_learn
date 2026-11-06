@@ -1,5 +1,5 @@
 import { Copy, MousePointerClick, Power, Trash2 } from "lucide-react";
-import { KINDS, LLM_MODELS, RUNAWAY_STEPS, SHARD_EFFICIENCY, agentEffectiveSteps, dbSizes, fmtRps, nodeMonthlyUsd, nodeTitle, sagaOutcome, serverSizes, SAGA_CAUSES, type NodeConfig } from "../engine";
+import { KINDS, LB_ALGOS, LLM_MODELS, lbAlgo, serverSize, type SimNode, RUNAWAY_STEPS, SHARD_EFFICIENCY, agentEffectiveSteps, dbSizes, fmtRps, nodeMonthlyUsd, nodeTitle, sagaOutcome, serverSizes, SAGA_CAUSES, type NodeConfig } from "../engine";
 import { useWorkspace } from "../state/workspace";
 import { KindIcon } from "../ui/icons";
 import { capacityOf } from "./NodeCard";
@@ -24,6 +24,59 @@ function Slider({ label, value, min, max, set, help, unit = "" }: { label: strin
       <input type="range" min={min} max={max} value={value} onChange={(e) => set(+e.target.value)} />
       {help && <span className="help">{help}</span>}
     </label>
+  );
+}
+
+/** Pick the algorithm, read what it does, and see the split it produces right now. */
+function LbSettings({ node }: { node: SimNode }) {
+  const graph = useWorkspace((s) => s.graph);
+  const down = useWorkspace((s) => s.down);
+  const updateConfig = useWorkspace((s) => s.updateConfig);
+  const sim = useSim();
+  const algo = lbAlgo(node.config.lbAlgo);
+  const outs = graph.edges.filter((e) => e.from === node.id);
+  const total = outs.reduce((a, e) => a + (sim.edges[e.id]?.rps ?? 0), 0);
+  return (
+    <>
+      <div className="setting">
+        <span className="setting-label">Algorithm</span>
+        <div className="algo-grid" role="radiogroup" aria-label="Load-balancing algorithm">
+          {LB_ALGOS.map((a) => (
+            <button key={a.id} role="radio" aria-checked={a.id === algo.id} className={`algo-opt${a.id === algo.id ? " on" : ""}`} onClick={() => updateConfig(node.id, { lbAlgo: a.id })}>
+              {a.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      {outs.length > 0 && (
+        <div className="setting">
+          <span className="row between"><span className="setting-label">Traffic split</span><span className="muted small">right now</span></span>
+          <ul className="split-list">
+            {outs.map((e) => {
+              const t = graph.nodes.find((x) => x.id === e.to);
+              if (!t) return null;
+              const share = total > 0 ? (sim.edges[e.id]?.rps ?? 0) / total : 0;
+              const util = sim.nodes[t.id]?.util ?? 0;
+              const dead = down.includes(t.id);
+              return (
+                <li key={e.id}>
+                  <span className="split-name">{nodeTitle(t, graph.nodes)}{t.kind === "server" && <small> · {serverSize(t.config.size).label.split(" · ")[0]}</small>}</span>
+                  <span className="split-bar"><span style={{ width: `${share * 100}%`, background: dead ? "var(--bad)" : utilColor(util) }} /></span>
+                  <b className="split-share">{Math.round(share * 100)}%</b>
+                  <span className={`split-util${dead ? " bad" : ""}`} style={dead ? undefined : { color: utilColor(util) }}>{dead ? "down" : `${Math.round(util * 100)}% busy`}</span>
+                </li>
+              );
+            })}
+          </ul>
+          <span className="help">Each bar is that server's share of this load balancer's requests, coloured by how full the server is. Try another algorithm and watch it change.</span>
+        </div>
+      )}
+      <div className="algo-card">
+        <p><span className="tag">How it works</span>{algo.how}</p>
+        <p><span className="tag">Good for</span>{algo.goodFor}</p>
+        <p><span className="tag warn">Watch out</span>{algo.watchOut}</p>
+      </div>
+    </>
   );
 }
 
@@ -138,7 +191,10 @@ export function Inspector() {
         )}
 
         {n.kind === "lb" && (
-          <Toggle on={c.healthChecks} set={(v) => set({ healthChecks: v })} label="Health checks" help="Stop sending traffic to servers that are down. Without them, a dead server still gets its share - and those requests fail." />
+          <>
+            <LbSettings node={n} />
+            <Toggle on={c.healthChecks} set={(v) => set({ healthChecks: v })} label="Health checks" help="Stop sending traffic to servers that are down. Without them, a dead server still gets its share - and those requests fail." />
+          </>
         )}
 
         {n.kind === "worker" && (

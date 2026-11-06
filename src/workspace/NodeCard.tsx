@@ -3,6 +3,7 @@ import { memo } from "react";
 import {
   CAN_SEND_TO,
   KINDS,
+  lbAlgo,
   cacheCap,
   consumerCap,
   PARTITION_CAP,
@@ -64,7 +65,7 @@ export function subtitleOf(n: SimNode): string {
     case "limiter":
       return c.limitPerIp ? `${c.limitPerIp} req/s per IP` : "off - no limit set";
     case "lb":
-      return c.healthChecks ? "health checks on" : "health checks off";
+      return `${lbAlgo(c.lbAlgo).short}${c.healthChecks ? " · health checks" : ""}`;
     case "worker":
       return `${c.workers ?? 1} worker${(c.workers ?? 1) > 1 ? "s" : ""}`;
     case "queue":
@@ -102,7 +103,7 @@ function NodeCardImpl({ id, selected }: NodeProps) {
   const util = r?.util ?? 0;
   const down = r?.down;
   const isClient = n.kind === "client";
-  const showSub = detailed || ["saga", "kafka", "consumer", "server", "db", "cache", "cdn", "limiter", "llm", "vectordb", "agent"].includes(n.kind);
+  const showSub = detailed || ["lb", "saga", "kafka", "consumer", "server", "db", "cache", "cdn", "limiter", "llm", "vectordb", "agent"].includes(n.kind);
   const alert =
     n.kind === "consumer" && (r?.lagGrowth ?? 0) > 0.5
       ? `Lag +${fmtRps(r!.lagGrowth!)}/s`

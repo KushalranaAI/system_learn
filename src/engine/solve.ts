@@ -1,5 +1,7 @@
 import {
+  BLACK_HOLE_PULL,
   BOT_IPS,
+  IP_HASH_SKEW,
   KINDS,
   NAT_IP_RPS,
   NAT_SHARE,
@@ -331,14 +333,44 @@ function solveOnce(graph: Graph, traffic: Traffic, cond: Conditions, memo?: Memo
 
       case "lb": {
         const hc = !!n.config.healthChecks;
+        const algo = n.config.lbAlgo ?? "round-robin";
         const targets = hc ? out.filter((e) => !isDown(e.to)) : out;
+        const capOf = (to: string) => {
+          const k = byId.get(to)!;
+          return k.kind === "server" ? serverSize(k.config.size).cap : 1;
+        };
+        // How the algorithm splits traffic, as weights per server.
+        const alive = targets.filter((e) => !isDown(e.to));
+        const meanCap = alive.length ? alive.reduce((a, e) => a + capOf(e.to), 0) / alive.length : 1;
+        const weights = targets.map((e, i) => {
+          if (algo === "weighted") return capOf(e.to);
+          if (algo === "least-conn") return isDown(e.to) ? meanCap * BLACK_HOLE_PULL : capOf(e.to);
+          if (algo === "ip-hash") return i === 0 && targets.length > 1 ? IP_HASH_SKEW : 1;
+          return 1;
+        });
+        const W = weights.reduce((a, b) => a + b, 0) || 1;
+        const deadShare = targets.reduce((a, e, i) => a + (isDown(e.to) ? weights[i] / W : 0), 0);
+
         if (!out.length) issue("error", "The load balancer isn't wired to any API server.", id);
         else if (!targets.length) issue("error", "Every API server behind the load balancer is down.", id);
-        else if (!hc && out.some((e) => isDown(e.to)))
-          issue("error", `An API server is down, but the load balancer still sends it 1/${out.length} of the traffic - those requests fail. Turn on health checks.`, id);
+        else if (!hc && deadShare > 0)
+          issue(
+            "error",
+            algo === "least-conn"
+              ? `An API server is down and health checks are off. Least connections makes it worse: the dead server fails requests instantly, looks idle, and gets ${pct(deadShare)} of the traffic - all of it fails. Turn on health checks.`
+              : `An API server is down, but the load balancer still sends it ${pct(deadShare)} of the traffic - those requests fail. Turn on health checks.`,
+            id,
+          );
         else if (hc && out.some((e) => isDown(e.to)))
           issue("info", "Health checks took the dead API server out of rotation - the others carry its share.", id);
-        for (const b of passed) for (const t of targets) send(id, t.to, { ...b, rps: b.rps / targets.length });
+
+        const sizes = new Set(alive.map((e) => capOf(e.to)));
+        if (algo === "round-robin" && sizes.size > 1)
+          issue("warn", "Round robin gives every API server the same share, but they're different sizes, so the smallest fills up first. Weighted round robin or least connections splits traffic by capacity.", id);
+        if (algo === "ip-hash" && targets.length > 1)
+          issue("info", `IP hash keeps each user on one server, so the split is uneven: ${title(byId.get(targets[0].to)!)} gets about ${Math.round((IP_HASH_SKEW - 1) * 100)}% more than the others.`, id);
+
+        for (const b of passed) targets.forEach((t, i) => send(id, t.to, { ...b, rps: (b.rps * weights[i]) / W }));
         break;
       }
 
