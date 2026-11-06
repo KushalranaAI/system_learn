@@ -53,6 +53,8 @@ interface ChatState {
   messages: (ChatMsg & { error?: boolean })[];
   setOpen: (v: boolean) => void;
   send: (text: string, route: string) => Promise<void>;
+  /** open the chat and ask a question (without an AI key, the chat opens on its setup screen) */
+  ask: (text: string, route: string) => void;
   stop: () => void;
   clear: () => void;
 }
@@ -65,6 +67,10 @@ export const useChat = create<ChatState>((set, get) => ({
   busy: false,
   messages: [],
   setOpen: (open) => set({ open }),
+  ask: (text, route) => {
+    set({ open: true });
+    void get().send(text, route);
+  },
   stop: () => ctrl?.abort(),
   clear: () => {
     ctrl?.abort();

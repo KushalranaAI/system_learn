@@ -1,14 +1,14 @@
 import { compressToEncodedURIComponent, decompressFromEncodedURIComponent } from "lz-string";
-import { BookOpen, ChevronRight, Download, Link2, Plus, RefreshCw, Search, Trash2, Upload } from "lucide-react";
+import { BookOpen, Check, ChevronRight, CircleHelp, Download, Link2, Plus, RefreshCw, Search, Trash2, Upload } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import type { Graph, Incident, Resilience, Traffic } from "../engine";
 import { PRESET_CATEGORIES, type Preset } from "../presets";
 import { SCENARIOS, scenarioById } from "../scenarios";
 import { Markdown } from "../ui/Markdown";
 import { loadProgress, updateProgress, type Scenario } from "../progress";
 import { MEASURED, savedProfileId } from "../state/profile";
-import { useChatSource } from "../chat/store";
+import { useChat, useChatSource } from "../chat/store";
 import { useWorkspace } from "../state/workspace";
 import { Workspace } from "../workspace/Workspace";
 
@@ -39,6 +39,40 @@ function applyScenario(s: Shared) {
   if (s.incident) ws.setIncident(s.incident);
 }
 
+/** A starting point's "Try this" steps: tick them off as you go (saved per starting point), or ask about one. */
+function TryList({ title, steps }: { title: string; steps: string[] }) {
+  const route = useLocation().pathname;
+  const [done, setDone] = useState<number[]>(() => loadProgress().guide?.tried?.[title] ?? []);
+  useEffect(() => setDone(loadProgress().guide?.tried?.[title] ?? []), [title]);
+  const toggle = (i: number) => {
+    const next = done.includes(i) ? done.filter((x) => x !== i) : [...done, i];
+    setDone(next);
+    updateProgress((p) => (p.guide = { ...p.guide, tried: { ...p.guide?.tried, [title]: next } }));
+  };
+  const ask = (t: string) => useChat.getState().ask(`Help me with this exercise on "${title}": "${t}". What should I change on the canvas, and what should I expect to see?`, route);
+  return (
+    <>
+      <span className="try-progress">Try this · {done.length}/{steps.length} done</span>
+      <ol className="try-list">
+        {steps.map((t, i) => {
+          const on = done.includes(i);
+          return (
+            <li key={t} className={on ? "done" : ""}>
+              <button className="try-check" onClick={() => toggle(i)} aria-pressed={on} title={on ? "Mark as not done" : "Mark as done"}>
+                {on ? <Check size={12} strokeWidth={3} /> : i + 1}
+              </button>
+              <span className="grow">{t}</span>
+              <button className="icon-btn sm try-ask" onClick={() => ask(t)} title="Not sure how? Ask the tutor about this step" aria-label="Ask about this step">
+                <CircleHelp size={14} />
+              </button>
+            </li>
+          );
+        })}
+      </ol>
+    </>
+  );
+}
+
 export function Sandbox() {
   const [params, setParams] = useSearchParams();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -55,6 +89,8 @@ export function Sandbox() {
   useEffect(() => {
     const ws = useWorkspace.getState();
     ws.setProfile(savedProfileId());
+    const { traffic, ran } = loadProgress().guide ?? {};
+    ws.setGuideDone({ traffic, ran });
     const shared = params.get("d") && decodeShared(params.get("d")!);
     const preset = scenarioById(params.get("preset"));
     const saved = loadProgress().sandbox;
@@ -76,6 +112,7 @@ export function Sandbox() {
     }
     return useWorkspace.subscribe((s, prev) => {
       if (s.graph !== prev.graph || s.traffic !== prev.traffic) updateProgress((p) => (p.sandbox = { graph: s.graph, traffic: s.traffic }));
+      if (s.guideDone !== prev.guideDone) updateProgress((p) => (p.guide = { ...p.guide, ...s.guideDone }));
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.get("preset"), params.get("d")]);
@@ -167,11 +204,7 @@ export function Sandbox() {
           {current.lesson && (
             <Link className="scenario-lesson" to={`/lesson/${current.lesson}`}><BookOpen size={13} /> Full write-up: lesson {current.lesson}</Link>
           )}
-          {current.tryThis.length > 0 && (
-            <ol className="try-list">
-              {current.tryThis.map((t, i) => <li key={t}><span className="step-num">{i + 1}</span><span>{t}</span></li>)}
-            </ol>
-          )}
+          {current.tryThis.length > 0 && <TryList title={current.title} steps={current.tryThis} />}
         </section>
       )}
 
@@ -267,5 +300,5 @@ export function Sandbox() {
     </div>
   );
 
-  return <Workspace left={left} leftLabel="scenarios" />;
+  return <Workspace left={left} leftLabel="scenarios" tour />;
 }

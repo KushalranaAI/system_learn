@@ -141,6 +141,8 @@ export interface KindSpec {
   label: string;
   short: string;
   blurb: string;
+  /** the problem it solves: when a learner should reach for it */
+  useWhen: string;
   /** base service time per request in ms (includes one network hop) */
   ms: number;
   /** fixed capacity in req/s (server/db/worker compute theirs) */
@@ -155,76 +157,91 @@ export const KINDS: Record<NodeKind, KindSpec> = {
   client: {
     kind: "client", label: "Client", short: "Client", icon: "📱", color: "#94a3b8",
     blurb: "Users' apps and browsers. Every request starts here.",
+    useWhen: "Always, once per design. It stands for all your users.",
     ms: 0, cap: Infinity, usd: 0, defaults: {},
   },
   cdn: {
     kind: "cdn", label: "CDN", short: "CDN", icon: "🌍", color: "#38bdf8",
     blurb: "Edge servers near users. Answers cacheable reads without touching your servers. Writes and bot traffic for random URLs pass through.",
+    useWhen: "Many users fetch the same files or pages (images, video, public pages), often far from your servers.",
     ms: 4, cap: 1_000_000, usd: 50, defaults: { hitRatio: 0.6 },
   },
   limiter: {
     kind: "limiter", label: "Rate limiter", short: "Limiter", icon: "🚦", color: "#f59e0b",
     blurb: "Counts requests per IP at the edge and rejects the excess with 429. Too strict and it also blocks offices and mobile carriers that share one IP.",
+    useWhen: "Bots, scrapers or one noisy customer could flood you. Set a per-IP limit.",
     ms: 0.3, cap: 500_000, usd: 30, defaults: { limitPerIp: 0 },
   },
   lb: {
     kind: "lb", label: "Load balancer", short: "LB", icon: "⚖️", color: "#a78bfa",
     blurb: "Spreads requests evenly across API servers. With health checks on, it stops sending to dead servers.",
+    useWhen: "You run more than one API server, or want to survive one dying (turn on health checks).",
     ms: 0.5, cap: 150_000, usd: 25, defaults: { healthChecks: false },
   },
   server: {
     kind: "server", label: "API server", short: "API", icon: "🖥️", color: "#10b981",
     blurb: "Runs your code: reads from the cache, falls back to the database, writes to the primary (or hands writes to a queue).",
+    useWhen: "Always: it runs your code. Add more behind a load balancer when one is too busy.",
     ms: 2, cap: 0, usd: 0, defaults: { size: "s" },
   },
   cache: {
     kind: "cache", label: "Cache (Redis)", short: "Cache", icon: "⚡", color: "#ef4444",
     blurb: "In-memory key-value store. Hits skip the database. Bots asking for random keys always miss.",
+    useWhen: "Reads far outnumber writes, the same data is read again and again, and the database is busy.",
     ms: 0.4, cap: 80_000, usd: 60, defaults: { hitRatio: 0.8 },
   },
   db: {
     kind: "db", label: "Database", short: "DB", icon: "🗄️", color: "#3b82f6",
     blurb: "Postgres-style relational database. The primary takes writes; replicas copy every write and add read capacity, a few ms behind.",
+    useWhen: "Always, to keep data. Add read replicas when reads overload it; shards when writes do.",
     ms: 2, cap: 0, usd: 0, defaults: { size: "s", role: "primary" },
   },
   queue: {
     kind: "queue", label: "Queue", short: "Queue", icon: "📬", color: "#eab308",
     blurb: "Accepts writes instantly and holds them until workers process them. Users get a fast reply; the work happens later.",
+    useWhen: "Work can happen a bit later (emails, resizing, imports), or writes arrive in bursts the database can't absorb.",
     ms: 1, cap: 50_000, usd: 40, defaults: {},
   },
   worker: {
     kind: "worker", label: "Workers", short: "Workers", icon: "⚙️", color: "#14b8a6",
     blurb: `Background processes that pull jobs off the queue and write results to the database. Throughput per process comes from the active capacity profile.`,
+    useWhen: "Behind every queue: they do the queued work.",
     ms: 20, cap: 0, usd: 0, defaults: { workers: 2 },
   },
   kafka: {
     kind: "kafka", label: "Kafka topic", short: "Kafka", icon: "📜", color: "#fb923c",
     blurb: "A partitioned, durable log. Services publish events once; every consumer group reads the whole stream at its own pace. Order is kept only within a partition.",
+    useWhen: "Several services need the same stream of events, each at its own pace, or you need to replay history.",
     ms: 2, cap: 0, usd: 0, defaults: { partitions: 6, hotKeyPct: 0 },
   },
   consumer: {
     kind: "consumer", label: "Consumer group", short: "Consumers", icon: "👥", color: "#22d3ee",
     blurb: "Instances that share a topic's partitions - one consumer per partition at most. If they can't keep up, lag (events behind) grows.",
+    useWhen: "Behind a Kafka topic: each group processes the whole stream for one purpose.",
     ms: 1, cap: 0, usd: 0, defaults: { consumers: 3 },
   },
   saga: {
     kind: "saga", label: "Saga orchestrator", short: "Saga", icon: "🧭", color: "#e879f9",
     blurb: "Runs each order as a sequence of local transactions (reserve stock, charge, confirm) with compensations. Its safeguards decide how many orders end inconsistent.",
+    useWhen: "One action spans several services or databases (stock, payment, shipping) and must never end half-done.",
     ms: 1, cap: 50_000, usd: 60, defaults: { sagaSteps: 3, compensate: false, queryTimeouts: false, idempotencyKeys: false, outbox: false, dedupeConsumers: false },
   },
   llm: {
     kind: "llm", label: "LLM inference", short: "LLM", icon: "🧠", color: "#c084fc",
     blurb: "A self-hosted language model on GPUs. Each replica serves only a handful of requests per second, costs thousands a month, and its latency shown here is time to first token. Continuous batching multiplies throughput.",
+    useWhen: "Your product generates text or answers questions with a model you host yourself.",
     ms: 60, cap: 0, usd: 0, defaults: { model: "small", replicas: 1, batching: true },
   },
   vectordb: {
     kind: "vectordb", label: "Vector database", short: "Vectors", icon: "🧭", color: "#2dd4bf",
     blurb: "Stores embeddings and answers nearest-neighbour queries (HNSW-style index) for retrieval-augmented generation. Queries are cheap next to the model; re-embedding and upserts cost more.",
+    useWhen: "The model must answer from your own documents (RAG): it finds the most relevant passages first.",
     ms: 6, cap: 0, usd: 0, defaults: { replicas: 1 },
   },
   agent: {
     kind: "agent", label: "Agent runtime", short: "Agent", icon: "🤖", color: "#f472b6",
     blurb: "Runs a task as a loop: the model thinks, calls a tool, reads the result, repeats. Every step is another model call, so steps multiply GPU load and latency. A step limit stops runaway loops.",
+    useWhen: "A task needs several model calls and tool uses in a loop (search, read, then act).",
     ms: 1, cap: 20_000, usd: 80, defaults: { agentSteps: 4, stepLimit: false },
   },
 };

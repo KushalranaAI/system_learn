@@ -36,6 +36,8 @@ interface WorkspaceState {
   profileId: ProfileId;
   rightTab: "guide" | "component" | "traffic";
   detailed: boolean;
+  /** milestones the coach tracks: has the learner changed the traffic / run an incident yet */
+  guideDone: { traffic?: boolean; ran?: boolean };
 
   load: (graph: Graph, traffic?: Traffic) => void;
   commit: (graph: Graph) => void;
@@ -44,6 +46,9 @@ interface WorkspaceState {
   dragDone: () => void;
   connect: (from: string, to: string) => void;
   removeEdge: (id: string) => void;
+  /** remove some wires and add others as one undoable change (refused wires are skipped with a toast) */
+  rewire: (remove: string[], add: [string, string][]) => void;
+  setGuideDone: (d: WorkspaceState["guideDone"]) => void;
   removeNode: (id: string) => void;
   updateConfig: (id: string, patch: NodeConfig) => void;
   select: (id: string | null) => void;
@@ -89,6 +94,7 @@ export const useWorkspace = create<WorkspaceState>((set, get) => ({
   profileId: "reference",
   rightTab: "guide",
   detailed: false,
+  guideDone: {},
 
   load: (graph, traffic) =>
     set({
@@ -136,6 +142,17 @@ export const useWorkspace = create<WorkspaceState>((set, get) => ({
     get().commit({ ...g, edges: g.edges.filter((e) => e.id !== id) });
   },
 
+  rewire: (remove, add) => {
+    let g: Graph = { ...get().graph, edges: get().graph.edges.filter((e) => !remove.includes(e.id)) };
+    for (const [from, to] of add) {
+      const refusal = wireRefusal(g, from, to);
+      if (refusal) return get().notify(refusal);
+      g = { ...g, edges: [...g.edges, { id: uid("e"), from, to }] };
+    }
+    get().commit(g);
+  },
+  setGuideDone: (d) => set((s) => ({ guideDone: { ...s.guideDone, ...d } })),
+
   removeNode: (id) => {
     const g = get().graph;
     get().commit({ nodes: g.nodes.filter((n) => n.id !== id), edges: g.edges.filter((e) => e.from !== id && e.to !== id) });
@@ -175,7 +192,7 @@ export const useWorkspace = create<WorkspaceState>((set, get) => ({
     else if (a.kind === "failover") s.setResilience({ dbFailover: true });
     s.notify(`Applied: ${a.label}`);
   },
-  setTraffic: (t) => set((s) => ({ traffic: { ...s.traffic, ...t }, playback: NO_PLAYBACK })),
+  setTraffic: (t) => set((s) => ({ traffic: { ...s.traffic, ...t }, playback: NO_PLAYBACK, guideDone: { ...s.guideDone, traffic: true } })),
   setResilience: (r) => set((s) => ({ resilience: { ...s.resilience, ...r }, playback: NO_PLAYBACK })),
   setIncident: (incident) => set({ incident, playback: NO_PLAYBACK }),
   toggleDown: (id) => set((s) => ({ down: s.down.includes(id) ? s.down.filter((d) => d !== id) : [...s.down, id], playback: NO_PLAYBACK })),
@@ -196,7 +213,7 @@ export const useWorkspace = create<WorkspaceState>((set, get) => ({
   runIncident: () => {
     const { graph, traffic, incident, resilience } = get();
     const ticks = runTimeline(graph, traffic, incident, resilience);
-    set({ playback: { ticks, index: 0, playing: true } });
+    set((s) => ({ playback: { ticks, index: 0, playing: true }, guideDone: { ...s.guideDone, ran: true } }));
   },
   setPlayback: (p) => set((s) => ({ playback: { ...s.playback, ...p } })),
   stopPlayback: () => set({ playback: NO_PLAYBACK }),

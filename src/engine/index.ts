@@ -6,3 +6,4 @@ export * from "./timeline";
 export * from "./checks";
 export * from "./saga";
 export * from "./explain";
+export * from "./coach";

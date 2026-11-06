@@ -1,10 +1,13 @@
-import { ChevronDown, CircleCheck, Lightbulb, OctagonAlert, TriangleAlert, Wand2 } from "lucide-react";
+import { ArrowRight, Check, ChevronDown, CircleCheck, CircleHelp, Hand, Lightbulb, OctagonAlert, TriangleAlert, Wand2 } from "lucide-react";
 import { useMemo, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { AiGuideCard } from "../ai/AiGuideCard";
 import { designContext, timelineContext } from "../ai/context";
 import { useAiExplanation } from "../ai/useAiExplanation";
-import { explainDesign, explainTimeline, type Advice } from "../engine";
+import { useChat } from "../chat/store";
+import { STAGES, explainTimeline, type Advice } from "../engine";
 import { useWorkspace } from "../state/workspace";
+import { runCoachAction, useCoach } from "./coach";
 import { IssuesPanel } from "./IssuesPanel";
 import { useSim } from "./sim";
 
@@ -43,24 +46,52 @@ function QuickFix({ a }: { a: Advice }) {
   return <button className="btn small" title={a.problem} onClick={() => applyAction(a.action!)}><Wand2 size={14} /> {a.action!.label}</button>;
 }
 
-const STEPS = [
-  ["Add components", "from the rail on the left of the canvas."],
-  ["Wire them", "by dragging from a card's right dot to the next card."],
-  ["Set the traffic", "in the Traffic tab and watch the cards fill up."],
-  ["Break something", "with an incident in the bar below, then press Run."],
-];
-
-function Onboarding() {
+/** The single next thing to do, with the build → wire → load → break path it belongs to. */
+function CoachCard() {
+  const { coach, tour } = useCoach();
+  const route = useLocation().pathname;
+  const { step, complete } = coach;
+  const allDone = STAGES.every((s) => complete[s.id]);
+  if (!step && (!tour || allDone)) return null;
+  const current = step?.stage === "fix" ? STAGES.find((s) => !complete[s.id])?.id : step?.stage;
+  const ask = () =>
+    useChat.getState().ask(
+      step
+        ? `I'm not sure about this step: "${step.title}". What should I do, and why does it matter for my design?`
+        : "I'm not sure what to try next with this design. What should I do, and why?",
+      route,
+    );
   return (
-    <div className="onboarding">
-      <h3>Build your first system</h3>
-      <ol>
-        {STEPS.map(([b, rest], i) => (
-          <li key={b}><span className="step-num">{i + 1}</span><span><b>{b}</b> {rest}</span></li>
-        ))}
-      </ol>
-      <p className="muted small">This guide then explains what will break first and how to fix it.</p>
-    </div>
+    <section className="coach" aria-label="Next step">
+      {tour && !allDone && (
+        <ol className="coach-stages">
+          {STAGES.map((s, i) => (
+            <li key={s.id} className={complete[s.id] ? "done" : s.id === current ? "now" : ""}>
+              <span className="coach-dot">{complete[s.id] ? <Check size={11} strokeWidth={3} /> : i + 1}</span>
+              {s.label}
+            </li>
+          ))}
+        </ol>
+      )}
+      {step && (
+        <>
+          <span className="tag">Next step</span>
+          <h3>{step.title}</h3>
+          <p>{step.why}</p>
+          {step.how && <p className="coach-how"><Hand size={14} /> {step.how}</p>}
+        </>
+      )}
+      <div className="row gap wrap">
+        {step?.action && (
+          <button className="btn small primary" onClick={() => runCoachAction(step.action!)}>
+            <ArrowRight size={14} /> {step.action.label}
+          </button>
+        )}
+        <button className="btn small ghost" onClick={ask} title="Ask the AI tutor about this step. It sees your design and its numbers.">
+          <CircleHelp size={14} /> Not sure? Ask
+        </button>
+      </div>
+    </section>
   );
 }
 
@@ -70,15 +101,10 @@ export function GuidePanel() {
   const resilience = useWorkspace((s) => s.resilience);
   const playback = useWorkspace((s) => s.playback);
   const incident = useWorkspace((s) => s.incident);
-  const profileId = useWorkspace((s) => s.profileId);
   const sim = useSim();
-  const live = !playback.ticks;
-  const guide = useMemo(
-    () => explainDesign(graph, traffic, sim, resilience),
-    // during playback, keep the steady-state guide
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [graph, traffic, resilience, profileId, live ? sim : null],
-  );
+  const { guide, coach } = useCoach();
+  // while the coach is still building or wiring the design, its one step replaces the list of fixes
+  const building = coach.step?.stage === "build" || coach.step?.stage === "wire";
   const done = playback.ticks && playback.index >= playback.ticks.length - 1;
   const story = useMemo(
     () => (playback.ticks && done ? explainTimeline(graph, traffic, playback.ticks, incident, resilience) : null),
@@ -100,14 +126,21 @@ export function GuidePanel() {
   );
   const aiDone = ai.status === "done" || (!!ai.data && ai.status !== "error");
 
-  if (!graph.nodes.length || (graph.nodes.length === 1 && graph.nodes[0].kind === "client")) return <Onboarding />;
+  if (!graph.nodes.length || (graph.nodes.length === 1 && graph.nodes[0].kind === "client"))
+    return (
+      <div className="guidepanel">
+        <CoachCard />
+        <p className="hint">Follow the steps and this panel then explains what breaks first, why, and how to fix it.</p>
+      </div>
+    );
 
-  const quickFixes = (story?.advice ?? guide.advice).filter((a) => a.action);
-  const advice = story ? story.advice : guide.advice.slice(0, 4);
+  const quickFixes = building ? [] : (story?.advice ?? guide.advice).filter((a) => a.action);
+  const advice = story ? story.advice : building ? [] : guide.advice.slice(0, 4);
   const tone = story ? story.tone : playback.ticks ? "" : guide.tone;
   const ToneIcon = tone === "good" ? CircleCheck : tone === "bad" ? OctagonAlert : TriangleAlert;
   return (
     <div className="guidepanel">
+      {!playback.ticks && <CoachCard />}
       <AiGuideCard {...ai} />
       {aiDone && quickFixes.length > 0 && (
         <div className="quickfixes">
@@ -138,7 +171,7 @@ export function GuidePanel() {
           {advice.map((a, i) => <AdviceCard key={a.problem} a={a} open={i === 0} />)}
         </section>
       )}
-      {!aiDone && !story && guide.advice.length === 0 && guide.tone === "good" && (
+      {!aiDone && !story && !coach.step && guide.advice.length === 0 && guide.tone === "good" && (
         <p className="hint">Nothing to fix at this load. Raise the traffic or run an incident to find the next weak spot.</p>
       )}
 

@@ -74,6 +74,7 @@ export function Inspector() {
         </div>
       </header>
       <p className="inspector-blurb">{spec.blurb}</p>
+      <p className="inspector-when"><span className="tag">Use it when</span>{spec.useWhen}</p>
 
       {r && n.kind !== "client" && (
         <div className="gauge">
